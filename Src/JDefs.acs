@@ -1,0 +1,195 @@
+#Define	UInt8_Min		0
+#Define	UInt8_Max		255
+
+#Define	UByte_Min		0
+#Define	UByte_Max		255
+
+
+#Define	Int8_Min		-128
+#Define	Int8_Max		127
+
+#Define	Byte_Min		-128
+#Define	Byte_Max		127
+
+
+#Define	UInt16_Min		0
+#Define	UInt16_Max		65535
+
+#Define	UShort_Min		0
+#Define	UShort_Max		65535
+
+#Define	Word_Min		0
+#Define	Word_Max		65535
+
+
+#Define	Int16_Min		-32768
+#Define	Int16_Max		32767
+
+#Define	Short_Min		-32768
+#Define	Short_Max		32767
+
+
+#Define	Int24_Min		-8388608
+#Define	Int24_Max		8388607
+
+
+#Define	UInt24_Min		0
+#Define	UInt24_Max		16777215
+
+
+#Define	UInt32_Min		0
+#Define	UInt32_Max		0xFFFFFFFF
+
+#Define	DWord_Min		0
+#Define	DWord_Max		0xFFFFFFFF
+
+
+#Define	Int32_Min		0x80000000
+#Define	Int32_Max		0x7FFFFFFF
+
+
+#ifndef Disable_ShortFixedMath
+	#Define	FxM				FixedMul	//	(A*B) >> 16  (For Int64)
+	#Define	FxD				FixedDiv	//	(A << 16)/B  (For Int64)
+	#Define	FSqRt			FixedSqRt	//	Double2Fixed(SqRt(Fixed2Double(A)))
+#endif
+
+#ifndef Disable_AltFuncNames
+	#Define	Distance2D		VectorLength
+	#Define	Atan2			VectorAngle
+	#Define Atan(X)			VectorAngle(1.0, X)
+	#Define CallMethod		ScriptCall
+	#Define	SectorWait		TagWait
+	#Define TID_Set(TID)	Thing_ChangeTID(0, TID)
+	#Define TID_Rearrange	Thing_ChangeTID
+	#Define TID_GetX		GetActorX
+	#Define TID_GetY		GetActorY
+	#Define TID_GetZ		GetActorZ
+	#Define TID_GetVX		GetActorVelX
+	#Define TID_GetVY		GetActorVelY
+	#Define TID_GetVZ		GetActorVelZ
+	#Define TID_SetPos		SetActorPosition
+	#Define TID_SetVel		SetActorVelocity
+#endif
+
+#ifndef Disable_AltIntNames
+	#Define	Int8			Int
+	#Define	UInt8			Int
+
+	#Define	Byte			Int
+	#Define	UByte			Int
+
+
+	#Define	Int16			Int
+	#Define	UInt16			Int
+
+	#Define	Short			Int
+	#Define	UShort			Int
+
+
+	#Define	Int32			Int
+	#Define	UInt32			Int
+	#Define	DWord			Int
+
+
+	#Define	Fixed32			Int
+#endif
+
+#ifndef Disable_UnstrictedTypes
+	#Define	Fixed_			Raw		//  Type SHOULD be Fixed, but can be other. Can be used in scripts.
+	#Define	Int_			Raw		//  Type SHOULD be Int, but can be other. Can be used in scripts.
+	#Define	Bool_			Raw		//  Type SHOULD be Bool, but can be other. Can be used in scripts.
+	#Define	Str_			Raw		//  Type SHOULD be Str, but can be other. Can be used in scripts.
+	#Define	Num_			Raw		//  Type SHOULD be Fixed_T or Int_T. Can be used in scripts.
+#endif
+
+#ifndef Disable_Colors
+	#Define RGB8_			Raw		//	Integer 8 bit channel				(        0 - 255		)
+	#Define RGBA8_			Raw		//	Integer 8 bit channel				(        0 - 255		)
+	#Define ARGB8_			Raw		//	Integer 8 bit channel				(        0 - 255		)
+
+	#Define sRGB_			Raw		//	Integer 8 bit channel				(        0 - 255		)
+	#Define sRGBA_			Raw		//	Integer 8 bit channel				(        0 - 255		)
+	#Define sARGB_			Raw		//	Integer 8 bit channel				(        0 - 255		)
+	
+	#Define HSV8_			Raw		//	Integer 8 bit channel				(        0 - 255		)
+	#Define HSVA8_			Raw		//	Integer 8 bit channel				(        0 - 255		)
+	#Define AHSV8_			Raw		//	Integer 8 bit channel				(        0 - 255		)
+#endif
+
+#ifndef Disable_Angles
+	#Define IDeg_			Raw		//	Integer DEGree		(0   - 360	)
+	#Define FDeg_			Raw		//	Fixed(type) DEGree	(0.0 - 360.0)
+
+	#Define BAng_			Raw		//	Byte DEGree			(0   - 256	)
+	#Define NAng_			Raw		//	Normalized DEGree	(0.0 - 1.0	)
+#endif
+
+
+#ifndef Disable_ExtraTypes
+	#Define Flags_			Raw
+#endif
+
+#ifndef Disable_References
+	#Define	AnyPtr_			Void[]*
+	#Define	AnyNRef_		Void[]?
+	#Define	AnyRef_			Void[]&
+
+	#Define	DynArr_			Void[]?
+	#Define	DynPtrArr_		Void[]?
+#endif
+
+/*
+0:		ACS_Call			(	Int__, Raw; Raw, Raw, Raw	)	:Int__	,
+81:		ACS_Pause			(	Int__, Raw					)	:Int__	,
+82:		ACS_Stop			(	Int__, Raw					)	:Int__	,
+83:		ACS_LockCall		(	Int__, Raw, Raw, Raw, Raw	)	:Int__	,
+84:		ACS_ResCall			(	Int__; Raw, Raw, Raw, Raw	)	:Int__	,
+85:		ACS_DoorCall		(	Int__, Raw, Raw, Raw, Raw	)	:Int__	,
+226:	ACS_AsyncCall		(	Int__, Raw; Raw, Raw, Raw	)	:Int__	,
+
+-39:	ACS_NCall			(	Str__, Raw; Raw, Raw, Raw	)	:Bool__	,
+-40:	ACS_NPause			(	Str__, Raw					)	:Bool__	,
+-41:	ACS_NStop			(	Str__, Raw					)	:Bool__	,
+-42:	ACS_NLockCall		(	Str__, Raw, Raw, Raw, Raw	)	:Bool__	,
+-43:	ACS_NDoorCall		(	Str__, Raw, Raw, Raw, Raw	)	:Bool__	,
+-44:	ACS_NResCall		(	Str__; Raw, Raw, Raw, Raw	)	:Int__	,
+-45:	ACS_NAsyncCall		(	Str__, Raw; Raw, Raw, Raw	)	:Bool__	;*/
+
+#ifndef Disable_ShortACS
+	#Define ACS_Call			ACS_Execute
+	#Define ACS_AsyncCall		ACS_ExecuteAlways
+	#Define ACS_ResCall			ACS_ExecuteWithResult
+	#Define ACS_LockCall		ACS_LockedExecute
+	#Define ACS_DoorCall		ACS_LockedExecuteDoor
+	#Define ACS_CallWait		ACS_ExecuteWait
+
+	#Define ACS_Pause			ACS_Suspend
+	#Define ACS_Stop			ACS_Terminate
+
+	#Define ACS_NCall			ACS_NamedExecute
+	#Define ACS_NAsyncCall		ACS_NamedExecuteAlways
+	#Define ACS_NResCall		ACS_NamedExecuteWithResult
+	#Define ACS_NLockCall		ACS_NamedLockedExecute
+	#Define ACS_NDoorCall		ACS_NamedLockedExecuteDoor
+	#Define ACS_NCallWait		ACS_NamedExecuteWait
+
+	#Define ACS_NPause			ACS_NamedSuspend
+	#Define ACS_NStop			ACS_NamedTerminate
+
+	#Define	ACS_Wait			ScriptWait
+	#Define	ACS_NWait			NamedScriptWait
+#endif
+
+#ifndef Disable_Extras
+	#Define Stringize(Arg)		#Arg
+#endif
+
+#Define	JLib_Build		"27_08_2025"
+#Define	JLib_Version	0.1
+
+
+#ifdef JLib__Enable_Dev_Only
+	#Define ___JLib_Name__(Name, Build) Stringize("_JLib_"Build"__"Name)
+	#Define JLib_Name(Name) ___JLib_Name__(Name, JLib_Build)
+#endif

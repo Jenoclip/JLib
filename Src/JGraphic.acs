@@ -1,0 +1,3126 @@
+#Library		"JGraphic"
+#NoCompact
+
+#pragma pointer_space global 0
+#pragma raw define on
+#pragma raw include on
+#Define JLib__Enable_Dev_Only True
+#Include		"JDefs.acs"
+#pragma raw include off
+
+#Import			"zcommon.bcs"
+
+#Import			"JCommon.acs"
+#LinkLibrary	"JCommon"
+
+#Import			"JMath.acs"
+#LinkLibrary	"JMath"
+
+#ifdef __INCLUDED__
+	#error "\"JGraphic\" is need to be #import\'ed instead of #include\'d"
+#endif
+
+/*
+╔══════════════════════════════════╗
+║Compiled with                     ║
+║    ▀▀▀█ ▀█▀      █▀▀▄ █▀▀█ █▀▀█  ║
+║      ▄▀  █       █  █ █    █     ║
+║    ▄▀    █  ▀▀▀▀ █▀▀▄ █    █     ║
+║    █▄▄▄  █       █▄▄▀ █▄▄█ █▄▄█  ║
+╚══════════════════════════════════╝
+*/
+
+Internal Namespace _Tmp
+{
+	Vec3_T* V3_0;
+	
+	Script JLib_Name("Graphics__Init") Open
+	{
+		Log(s:__Script__);
+		V3_0 = Vec3_C(0, 0, 0);
+	}
+}
+
+Namespace RGB8//Truecolor, 24BPP sRGB
+{
+	RGB8_ Get_R(RGB8_ Col)				{Return (Col	& 0xFF0000) >> 16;	}
+	RGB8_ Get_G(RGB8_ Col)				{Return (Col	& 0x00FF00) >> 8;	}
+	RGB8_ Get_B(RGB8_ Col)				{Return  Col	& 0x0000FF;			}
+	
+	RGB8_ Set_R(RGB8_ Col, Byte Val)	{Return (Col & 0x00FFFF) | (Math::ByteClamp(Val) << 16);}
+	RGB8_ Set_G(RGB8_ Col, Byte Val)	{Return (Col & 0xFF00FF) | (Math::ByteClamp(Val) << 8);}
+	RGB8_ Set_B(RGB8_ Col, Byte Val)	{Return (Col & 0xFFFF00) | (Math::ByteClamp(Val));}
+	
+	RGB8_ Inv_R(RGB8_ Col)				{Return Col ^ 0xFF0000;}
+	RGB8_ Inv_G(RGB8_ Col)				{Return Col ^ 0x00FF00;}
+	RGB8_ Inv_B(RGB8_ Col)				{Return Col ^ 0x0000FF;}
+	
+	RGB8_ Inv(RGB8_ Col)				{Return Col ^ UInt24_Max;}
+	
+	Byte GetRGBMean(RGB8_ Col)			{Return Math::Mean3(Get_R(Col), Get_G(Col), Get_B(Col));}
+	
+	RGB8_ Combine(Byte Red, Byte Green, Byte Blue)
+	{
+		Return (Math::ByteClamp(Red) << 16) | (Math::ByteClamp(Green) << 8) | Math::ByteClamp(Blue);
+	}
+	
+	RGB8_ GetMean2(RGB8_ Col1, RGB8_ Col2)
+	{
+		Return
+		Combine
+		(
+			Math::Mean2(Get_R(Col1), Get_R(Col2)),
+			Math::Mean2(Get_G(Col1), Get_G(Col2)),
+			Math::Mean2(Get_B(Col1), Get_B(Col2))
+		);
+	}
+	
+	RGB8_ GetMean3(RGB8_ Col1, RGB8_ Col2, RGB8_ Col3)
+	{
+		Return
+		Combine
+		(
+			Math::Mean3(Get_R(Col1), Get_R(Col2), Get_R(Col3)),
+			Math::Mean3(Get_G(Col1), Get_G(Col2), Get_G(Col3)),
+			Math::Mean3(Get_B(Col1), Get_B(Col2), Get_B(Col3))
+		);
+	}
+	
+	RGB8_ GetMean4(RGB8_ Col1, RGB8_ Col2, RGB8_ Col3, RGB8_ Col4)
+	{
+		Return
+		Combine
+		(
+			Math::Mean4(Get_R(Col1), Get_R(Col2), Get_R(Col3), Get_R(Col4)),
+			Math::Mean4(Get_G(Col1), Get_G(Col2), Get_G(Col3), Get_G(Col4)),
+			Math::Mean4(Get_B(Col1), Get_B(Col2), Get_B(Col3), Get_B(Col4))
+		);
+	}
+	
+	RGB8_ GetMean5(RGB8_ Col1, RGB8_ Col2, RGB8_ Col3, RGB8_ Col4, RGB8_ Col5)
+	{
+		Return
+		Combine
+		(
+			Math::Mean5(Get_R(Col1), Get_R(Col2), Get_R(Col3), Get_R(Col4), Get_R(Col5)),
+			Math::Mean5(Get_G(Col1), Get_G(Col2), Get_G(Col3), Get_G(Col4), Get_G(Col5)),
+			Math::Mean5(Get_B(Col1), Get_B(Col2), Get_B(Col3), Get_B(Col4), Get_B(Col5))
+		);
+	}
+	
+	RGB8_ GetPropMean2(RGB8_ Col1, RGB8_ Col2)
+	{
+		Return
+		Combine
+		(
+			Math::IPropMean2(Get_R(Col1), Get_R(Col2)),
+			Math::IPropMean2(Get_G(Col1), Get_G(Col2)),
+			Math::IPropMean2(Get_B(Col1), Get_B(Col2))
+		);
+	}
+	
+	Fixed Get_NR(RGB8_ Col)	{Return (Col  & 0xFF0000)		 / 0xFF;}
+	Fixed Get_NG(RGB8_ Col)	{Return ((Col & 0x00FF00) << 8)	 / 0xFF;}
+	Fixed Get_NB(RGB8_ Col)	{Return ((Col & 0x0000FF) << 16) / 0xFF;}
+	
+	RGB8_ Set_NR(RGB8_ Col, Fixed Val)	{Return Set_R(Col, (Val * 255) >> 16);}
+	RGB8_ Set_NG(RGB8_ Col, Fixed Val)	{Return Set_G(Col, (Val * 255) >> 16);}
+	RGB8_ Set_NB(RGB8_ Col, Fixed Val)	{Return Set_B(Col, (Val * 255) >> 16);}
+	
+	Void To_V3	(RGB8_ Col, Vec3_T* Output)	{Vec3_Set(Output, Get_R(Col),	Get_G(Col),		Get_B(Col));}
+	Void To_NV3	(RGB8_ Col, Vec3_T* Output)	{Vec3_Set(Output, Get_NR(Col),	Get_NG(Col),	Get_NB(Col));}
+	
+	RGB8_ From_V3	(Vec3_T* V3) {Return Combine(V3.X, V3.Y, V3.Z);}
+	RGB8_ From_NV3	(Vec3_T* V3) {Return Combine((V3.X * 255) >> 16, (V3.Y * 255) >> 16, (V3.Z * 255) >> 16);}
+	
+	ARGB8_ To_ARGB8(RGB8_ Col, Byte Alpha = 255) {Return ARGB8::Set_A(Col, Alpha);}
+	RGBA8_ To_RGBA8(RGB8_ Col, Byte Alpha = 255) {Return RGBA8::Set_A(Col << 8, Alpha);}
+	
+	HSV8_ To_HSV8(RGB8_ Col)
+	{
+		Int ColR = Get_R(Col); Int ColG = Get_G(Col); Int ColB = Get_B(Col);
+		
+		HSV8_ Output = 0;
+		
+		Int ColMax = Math::Max3(ColR, ColG, ColB)	;
+		Int ColMin = Math::Min3(ColR, ColG, ColB)	;
+		Int ColMMD = ColMax - ColMin				;//MMD - Max-Min Delta
+		
+		If(ColMMD != 0)
+		{
+			If(ColMMD == ColR)	{Output = HSV8::Set_H(Output, Math::ByteFMod(		((ColG - ColB) << 8)/((ColMMD + 1)*6)	));	}
+	Else{	If(ColMMD == ColG)	{Output = HSV8::Set_H(Output, Math::ByteFMod(85+(	((ColB - ColR) << 8)/((ColMMD + 1)*6)	)));}
+	Else{	If(ColMMD == ColB)	{Output = HSV8::Set_H(Output, Math::ByteFMod(127+(	((ColR - ColG) << 8)/((ColMMD + 1)*6)	)));}}}
+		}
+		Output = HSV8::Set_S(Output, (ColMMD << 8) / (ColMax + 1));
+		Output = HSV8::Set_V(Output, ColMax);
+		
+		Return Output;
+	}
+	
+	AHSV8_ To_AHSV8(RGB8_ Col, Byte Alpha = 255) {Return AHSV8::Set_A(RGB8::To_HSV8(Col), Alpha);		}
+	HSVA8_ To_HSVA8(RGB8_ Col, Byte Alpha = 255) {Return HSVA8::Set_A(RGB8::To_HSV8(Col) << 8, Alpha);	}
+}
+
+
+
+Namespace ARGB8//Truecolor, 32BPP sARGB
+{
+	ARGB8_ Get_A(ARGB8_ Col)			{Return ((Col	& 0xFF000000) >> 24) & 0xFF;}
+	ARGB8_ Get_R(ARGB8_ Col)			{Return (Col	& 0x00FF0000) >> 16;}
+	ARGB8_ Get_G(ARGB8_ Col)			{Return (Col	& 0x0000FF00) >> 8;}
+	ARGB8_ Get_B(ARGB8_ Col)			{Return  Col	& 0x000000FF;}
+	
+	ARGB8_ Set_A(ARGB8_ Col, Byte Val)	{Return (Col & 0x00FFFFFF) | (Math::ByteClamp(Val) << 24);}
+	ARGB8_ Set_R(ARGB8_ Col, Byte Val)	{Return (Col & 0xFF00FFFF) | (Math::ByteClamp(Val) << 16);}
+	ARGB8_ Set_G(ARGB8_ Col, Byte Val)	{Return (Col & 0xFFFF00FF) | (Math::ByteClamp(Val) << 8);}
+	ARGB8_ Set_B(ARGB8_ Col, Byte Val)	{Return (Col & 0xFFFFFF00) | (Math::ByteClamp(Val));}
+	
+	ARGB8_ Inv_A(ARGB8_ Col)			{Return Col ^ 0xFF000000;}
+	ARGB8_ Inv_R(ARGB8_ Col)			{Return Col ^ 0x00FF0000;}
+	ARGB8_ Inv_G(ARGB8_ Col)			{Return Col ^ 0x0000FF00;}
+	ARGB8_ Inv_B(ARGB8_ Col)			{Return Col ^ 0x000000FF;}
+	
+	ARGB8_ Inv(ARGB8_ Col)				{Return Col ^ UInt32_Max;}
+	
+	Byte GetARGBMean(ARGB8_ Col)		{Return Math::Mean4(Get_A(Col), Get_R(Col), Get_G(Col), Get_B(Col));}
+	Byte GetRGBMean(ARGB8_ Col)			{Return Math::Mean3(Get_R(Col), Get_G(Col), Get_B(Col));			}
+	
+	ARGB8_ Combine(Byte Alpha, Byte Red, Byte Green, Byte Blue)
+	{
+		Return (Math::ByteClamp(Alpha) << 24) |(Math::ByteClamp(Red) << 16) | (Math::ByteClamp(Green) << 8) | Math::ByteClamp(Blue);
+	}
+	
+	ARGB8_ GetMean2(ARGB8_ Col1, ARGB8_ Col2)
+	{
+		Return
+		Combine
+		(
+			Math::Mean2(Get_A(Col1), Get_A(Col2)),
+			Math::Mean2(Get_R(Col1), Get_R(Col2)),
+			Math::Mean2(Get_G(Col1), Get_G(Col2)),
+			Math::Mean2(Get_B(Col1), Get_B(Col2))
+		);
+	}
+	
+	ARGB8_ GetMean3(ARGB8_ Col1, ARGB8_ Col2, ARGB8_ Col3)
+	{
+		Return
+		Combine
+		(
+			Math::Mean3(Get_A(Col1), Get_A(Col2), Get_A(Col3)),
+			Math::Mean3(Get_R(Col1), Get_R(Col2), Get_R(Col3)),
+			Math::Mean3(Get_G(Col1), Get_G(Col2), Get_G(Col3)),
+			Math::Mean3(Get_B(Col1), Get_B(Col2), Get_B(Col3))
+		);
+	}
+	
+	ARGB8_ GetMean4(ARGB8_ Col1, ARGB8_ Col2, ARGB8_ Col3, ARGB8_ Col4)
+	{
+		Return
+		Combine
+		(
+			Math::Mean4(Get_A(Col1), Get_A(Col2), Get_A(Col3), Get_A(Col4)),
+			Math::Mean4(Get_R(Col1), Get_R(Col2), Get_R(Col3), Get_R(Col4)),
+			Math::Mean4(Get_G(Col1), Get_G(Col2), Get_G(Col3), Get_G(Col4)),
+			Math::Mean4(Get_B(Col1), Get_B(Col2), Get_B(Col3), Get_B(Col4))
+		);
+	}
+	
+	ARGB8_ GetMean5(ARGB8_ Col1, ARGB8_ Col2, ARGB8_ Col3, ARGB8_ Col4, ARGB8_ Col5)
+	{
+		Return
+		Combine
+		(
+			Math::Mean5(Get_A(Col1), Get_A(Col2), Get_A(Col3), Get_A(Col4), Get_A(Col5)),
+			Math::Mean5(Get_R(Col1), Get_R(Col2), Get_R(Col3), Get_R(Col4), Get_R(Col5)),
+			Math::Mean5(Get_G(Col1), Get_G(Col2), Get_G(Col3), Get_G(Col4), Get_G(Col5)),
+			Math::Mean5(Get_B(Col1), Get_B(Col2), Get_B(Col3), Get_B(Col4), Get_B(Col5))
+		);
+	}
+	
+	ARGB8_ GetPropMean2(ARGB8_ Col1, ARGB8_ Col2)
+	{
+		Return
+		Combine
+		(
+			Math::IPropMean2(Get_A(Col1), Get_A(Col2)),
+			Math::IPropMean2(Get_R(Col1), Get_R(Col2)),
+			Math::IPropMean2(Get_G(Col1), Get_G(Col2)),
+			Math::IPropMean2(Get_B(Col1), Get_B(Col2))
+		);
+	}
+	
+	Fixed Get_NA(ARGB8_ Col)				{Return (((Col & 0xFF000000) >> 8) & 0xFF)	/ 0xFF;}
+	Fixed Get_NR(ARGB8_ Col)				{Return (Col   & 0x00FF0000)				/ 0xFF;}
+	Fixed Get_NG(ARGB8_ Col)				{Return ((Col  & 0x0000FF00) << 8)			/ 0xFF;}
+	Fixed Get_NB(ARGB8_ Col)				{Return ((Col  & 0x000000FF) << 16)			/ 0xFF;}
+	
+	ARGB8_ Set_NA(ARGB8_ Col, Fixed Val)	{Return Set_A(Col, (Val * 255) >> 16);}
+	ARGB8_ Set_NR(ARGB8_ Col, Fixed Val)	{Return Set_R(Col, (Val * 255) >> 16);}
+	ARGB8_ Set_NG(ARGB8_ Col, Fixed Val)	{Return Set_G(Col, (Val * 255) >> 16);}
+	ARGB8_ Set_NB(ARGB8_ Col, Fixed Val)	{Return Set_B(Col, (Val * 255) >> 16);}
+	
+	Void To_V4	(ARGB8_ Col, Vec4_T* Output)	{Vec4_Set(Output, Get_A(Col),	Get_R(Col),		Get_G(Col),		Get_B(Col));}
+	Void To_NV4	(ARGB8_ Col, Vec4_T* Output)	{Vec4_Set(Output, Get_NA(Col),	Get_NR(Col),	Get_NG(Col),	Get_NB(Col));}
+	
+	ARGB8_ From_V4	(Vec4_T* V4) {Return Combine(V4.X, V4.Y, V4.Z, V4.W);}
+	ARGB8_ From_NV4	(Vec4_T* V4) {Return Combine((V4.X * 255) >> 16, (V4.Y * 255) >> 16, (V4.Z * 255) >> 16, (V4.W * 255) >> 16);}
+	
+	RGB8_ To_RGB8(ARGB8_ Col, Bool PremultAlpha = False)
+	{
+		If(PremultAlpha)
+		{
+			Byte Alpha = Get_A(Col);
+			Return	RGB8::Combine
+					(
+						(Get_R(Col) * Alpha) / 255,
+						(Get_G(Col) * Alpha) / 255,
+						(Get_B(Col) * Alpha) / 255
+					);
+		}
+		Return Col & UInt24_Max;
+	}
+	
+	RGBA8_ To_RGBA8(ARGB8_ Col) {Return RGBA8::Set_A(Col << 8, Get_A(Col));}
+	
+	HSV8_ To_HSV8(ARGB8_ Col, Bool PremultAlpha = False)
+	{
+		Int ColR = Get_R(Col); Int ColG = Get_G(Col); Int ColB = Get_B(Col);
+		
+		HSV8_ Output = 0;
+		
+		Int ColMax = Math::Max3(ColR, ColG, ColB)	;
+		Int ColMin = Math::Min3(ColR, ColG, ColB)	;
+		Int ColMMD = ColMax - ColMin				;//MMD - Max-Min Delta
+		
+		If(ColMMD != 0)
+		{
+
+			If(ColMMD == ColR)	{Output = HSV8::Set_H(Output, Math::ByteFMod(		((ColG - ColB) << 8)/((ColMMD + 1)*6)	));	}
+	Else{	If(ColMMD == ColG)	{Output = HSV8::Set_H(Output, Math::ByteFMod(85+(	((ColB - ColR) << 8)/((ColMMD + 1)*6)	)));}
+	Else{	If(ColMMD == ColB)	{Output = HSV8::Set_H(Output, Math::ByteFMod(127+(	((ColR - ColG) << 8)/((ColMMD + 1)*6)	)));}}}
+		}
+		Output = HSV8::Set_S(Output, (ColMMD << 8) / (ColMax + 1));
+		If(PremultAlpha)
+		{
+			Output = HSV8::Set_V(Output, (ColMax * Get_A(Col)) / 255);
+		}
+		Else
+		{
+			Output = HSV8::Set_V(Output, ColMax);
+		}
+		
+		Return Output;
+	}
+	
+	AHSV8_ To_AHSV8(ARGB8_ Col, Byte Alpha = 255) {Return AHSV8::Set_A(RGB8::To_HSV8(Col & UInt24_Max), Alpha);	}
+	HSVA8_ To_HSVA8(ARGB8_ Col, Byte Alpha = 255) {Return HSVA8::Set_A(RGB8::To_HSV8(Col) << 8, Alpha);			}
+}
+
+
+
+Namespace RGBA8//Truecolor, 32BPP sRGBA
+{
+	RGBA8_ Get_R(RGBA8_ Col)			{Return ((Col	& 0xFF000000) >> 24) & 0xFF;}
+	RGBA8_ Get_G(RGBA8_ Col)			{Return (Col	& 0x00FF0000) >> 16;}
+	RGBA8_ Get_B(RGBA8_ Col)			{Return (Col	& 0x0000FF00) >> 8;	}
+	RGBA8_ Get_A(RGBA8_ Col)			{Return  Col	& 0x000000FF;		}
+	
+	RGBA8_ Set_R(RGBA8_ Col, Byte Val)	{Return (Col & 0x00FFFFFF) | (Math::ByteClamp(Val) << 24);	}
+	RGBA8_ Set_G(RGBA8_ Col, Byte Val)	{Return (Col & 0xFF00FFFF) | (Math::ByteClamp(Val) << 16);	}
+	RGBA8_ Set_B(RGBA8_ Col, Byte Val)	{Return (Col & 0xFFFF00FF) | (Math::ByteClamp(Val) << 8);	}
+	RGBA8_ Set_A(RGBA8_ Col, Byte Val)	{Return (Col & 0xFFFFFF00) | (Math::ByteClamp(Val));		}
+	
+	RGBA8_ Inv_R(RGBA8_ Col)			{Return Col ^ 0xFF000000;}
+	RGBA8_ Inv_G(RGBA8_ Col)			{Return Col ^ 0x00FF0000;}
+	RGBA8_ Inv_B(RGBA8_ Col)			{Return Col ^ 0x0000FF00;}
+	RGBA8_ Inv_A(RGBA8_ Col)			{Return Col ^ 0x000000FF;}
+	
+	RGBA8_ Inv(RGBA8_ Col)				{Return Col ^ UInt32_Max;}
+	
+	Byte GetRGBAMean(RGBA8_ Col)		{Return Math::Mean4(Get_R(Col), Get_G(Col), Get_B(Col), Get_A(Col));}
+	Byte GetRGBMean(RGBA8_ Col)			{Return Math::Mean3(Get_R(Col), Get_G(Col), Get_B(Col));			}
+	
+	RGBA8_ Combine(Byte Red, Byte Green, Byte Blue, Byte Alpha)
+	{
+		Return (Math::ByteClamp(Red) << 24) |(Math::ByteClamp(Green) << 16) | (Math::ByteClamp(Blue) << 8) | Math::ByteClamp(Alpha);
+	}
+	
+	RGBA8_ GetMean2(RGBA8_ Col1, RGBA8_ Col2)
+	{
+		Return
+		Combine
+		(
+			Math::Mean2(Get_R(Col1), Get_R(Col2)),
+			Math::Mean2(Get_G(Col1), Get_G(Col2)),
+			Math::Mean2(Get_B(Col1), Get_B(Col2)),
+			Math::Mean2(Get_A(Col1), Get_A(Col2))
+		);
+	}
+	
+	RGBA8_ GetMean3(RGBA8_ Col1, RGBA8_ Col2, RGBA8_ Col3)
+	{
+		Return
+		Combine
+		(
+			Math::Mean3(Get_R(Col1), Get_R(Col2), Get_R(Col3)),
+			Math::Mean3(Get_G(Col1), Get_G(Col2), Get_G(Col3)),
+			Math::Mean3(Get_B(Col1), Get_B(Col2), Get_B(Col3)),
+			Math::Mean3(Get_A(Col1), Get_A(Col2), Get_A(Col3))
+		);
+	}
+	
+	RGBA8_ GetMean4(RGBA8_ Col1, RGBA8_ Col2, RGBA8_ Col3, RGBA8_ Col4)
+	{
+		Return
+		Combine
+		(
+			Math::Mean4(Get_R(Col1), Get_R(Col2), Get_R(Col3), Get_R(Col4)),
+			Math::Mean4(Get_G(Col1), Get_G(Col2), Get_G(Col3), Get_G(Col4)),
+			Math::Mean4(Get_B(Col1), Get_B(Col2), Get_B(Col3), Get_B(Col4)),
+			Math::Mean4(Get_A(Col1), Get_A(Col2), Get_A(Col3), Get_A(Col4))
+		);
+	}
+	
+	RGBA8_ GetMean5(RGBA8_ Col1, RGBA8_ Col2, RGBA8_ Col3, RGBA8_ Col4, RGBA8_ Col5)
+	{
+		Return
+		Combine
+		(
+			Math::Mean5(Get_R(Col1), Get_R(Col2), Get_R(Col3), Get_R(Col4), Get_R(Col5)),
+			Math::Mean5(Get_G(Col1), Get_G(Col2), Get_G(Col3), Get_G(Col4), Get_G(Col5)),
+			Math::Mean5(Get_B(Col1), Get_B(Col2), Get_B(Col3), Get_B(Col4), Get_B(Col5)),
+			Math::Mean5(Get_A(Col1), Get_A(Col2), Get_A(Col3), Get_A(Col4), Get_A(Col5))
+		);
+	}
+	
+	RGBA8_ GetPropMean2(RGBA8_ Col1, RGBA8_ Col2)
+	{
+		Return
+		Combine
+		(
+			Math::IPropMean2(Get_R(Col1), Get_R(Col2)),
+			Math::IPropMean2(Get_G(Col1), Get_G(Col2)),
+			Math::IPropMean2(Get_B(Col1), Get_B(Col2)),
+			Math::IPropMean2(Get_A(Col1), Get_A(Col2))
+		);
+	}
+	
+	Fixed Get_NR(RGBA8_ Col)				{Return (((Col & 0xFF000000) >> 8) & 0xFF)	/ 0xFF;}
+	Fixed Get_NG(RGBA8_ Col)				{Return (Col   & 0x00FF0000)				/ 0xFF;}
+	Fixed Get_NB(RGBA8_ Col)				{Return ((Col  & 0x0000FF00) << 8)			/ 0xFF;}
+	Fixed Get_NA(RGBA8_ Col)				{Return ((Col  & 0x000000FF) << 16)			/ 0xFF;}
+	
+	RGBA8_ Set_NR(RGBA8_ Col, Fixed Val)	{Return Set_R(Col, (Val * 255) >> 16);}
+	RGBA8_ Set_NG(RGBA8_ Col, Fixed Val)	{Return Set_G(Col, (Val * 255) >> 16);}
+	RGBA8_ Set_NB(RGBA8_ Col, Fixed Val)	{Return Set_B(Col, (Val * 255) >> 16);}
+	RGBA8_ Set_NA(RGBA8_ Col, Fixed Val)	{Return Set_A(Col, (Val * 255) >> 16);}
+	
+	Void To_V4	(RGBA8_ Col, Vec4_T* Output)	{Vec4_Set(Output, Get_R(Col),	Get_G(Col),		Get_B(Col),		Get_A(Col));}
+	Void To_NV4	(RGBA8_ Col, Vec4_T* Output)	{Vec4_Set(Output, Get_NR(Col),	Get_NG(Col),	Get_NB(Col),	Get_NA(Col));}
+	
+	RGBA8_ From_V4	(Vec4_T* V4) {Return Combine(V4.X, V4.Y, V4.Z, V4.W);}
+	RGBA8_ From_NV4	(Vec4_T* V4) {Return Combine((V4.X * 255) >> 16, (V4.Y * 255) >> 16, (V4.Z * 255) >> 16, (V4.W * 255) >> 16);}
+	
+	RGB8_ To_RGB8(RGBA8_ Col, Bool PremultAlpha = False)
+	{
+		If(PremultAlpha)
+		{
+			Byte Alpha = Get_A(Col);
+			Return	RGB8::Combine
+					(
+						(Get_R(Col) * Alpha) / 255,
+						(Get_G(Col) * Alpha) / 255,
+						(Get_B(Col) * Alpha) / 255
+					);
+		}
+		Return (Col >> 8) & UInt24_Max;
+	}
+	
+	ARGB8_ To_ARGB8(RGBA8_ Col) {Return ARGB8::Set_A(Col >> 8, Get_A(Col));}
+	
+	HSV8_ To_HSV8(RGBA8_ Col, Bool PremultAlpha = False)
+	{
+		Int ColR = Get_R(Col); Int ColG = Get_G(Col); Int ColB = Get_B(Col);
+		
+		HSV8_ Output = 0;
+		
+		Int ColMax = Math::Max3(ColR, ColG, ColB)	;
+		Int ColMin = Math::Min3(ColR, ColG, ColB)	;
+		Int ColMMD = ColMax - ColMin				;//MMD - Max-Min Delta
+		
+		If(ColMMD != 0)
+		{
+			If(ColMMD == ColR)	{Output = HSV8::Set_H(Output, Math::ByteFMod(		((ColG - ColB) << 8)/((ColMMD + 1)*6)	));	}
+	Else{	If(ColMMD == ColG)	{Output = HSV8::Set_H(Output, Math::ByteFMod(85+(	((ColB - ColR) << 8)/((ColMMD + 1)*6)	)));}
+	Else{	If(ColMMD == ColB)	{Output = HSV8::Set_H(Output, Math::ByteFMod(127+(	((ColR - ColG) << 8)/((ColMMD + 1)*6)	)));}}}
+		}
+		Output = HSV8::Set_S(Output, (ColMMD << 8) / (ColMax + 1));
+		If(PremultAlpha)
+		{
+			Output = HSV8::Set_V(Output, (ColMax * Get_A(Col)) / 255);
+		}
+		Else
+		{
+			Output = HSV8::Set_V(Output, ColMax);
+		}
+		
+		Return Output;
+	}
+	
+	AHSV8_ To_AHSV8(RGBA8_ Col, Byte Alpha = 255) {Return AHSV8::Set_A(RGB8::To_HSV8((Col >> 8) & UInt24_Max), Alpha);		}
+	HSVA8_ To_HSVA8(RGBA8_ Col, Byte Alpha = 255) {Return HSVA8::Set_A(RGB8::To_HSV8((Col >> 8) & UInt24_Max) << 8, Alpha);	}
+}
+
+
+
+
+
+
+Namespace HSV8
+{
+	HSV8_ Get_H(HSV8_ Col)				{Return (Col	& 0xFF0000) >> 16;	}
+	HSV8_ Get_S(HSV8_ Col)				{Return (Col	& 0x00FF00) >> 8;	}
+	HSV8_ Get_V(HSV8_ Col)				{Return  Col	& 0x0000FF;			}
+	
+	HSV8_ Set_H(HSV8_ Col, Byte Val)	{Return (Col & 0x00FFFF) | (Math::ByteClamp(Val) << 16);}
+	HSV8_ Set_S(HSV8_ Col, Byte Val)	{Return (Col & 0xFF00FF) | (Math::ByteClamp(Val) << 8);}
+	HSV8_ Set_V(HSV8_ Col, Byte Val)	{Return (Col & 0xFFFF00) | (Math::ByteClamp(Val));}
+	
+	HSV8_ Inv_H(HSV8_ Col)				{Return Col ^ 0xFF0000;}
+	HSV8_ Inv_S(HSV8_ Col)				{Return Col ^ 0x00FF00;}
+	HSV8_ Inv_V(HSV8_ Col)				{Return Col ^ 0x0000FF;}
+	
+	HSV8_ Inv(HSV8_ Col)				{Return Col ^ UInt24_Max;}
+	
+	Byte GetHSVMean(HSV8_ Col)			{Return Math::Mean3(Get_H(Col), Get_S(Col), Get_V(Col));}
+	
+	HSV8_ Combine(Byte Hue, Byte Saturation, Byte Value)
+	{
+		Return (Math::ByteClamp(Hue) << 16) | (Math::ByteClamp(Saturation) << 8) | Math::ByteClamp(Value);
+	}
+	
+	HSV8_ GetMean2(HSV8_ Col1, HSV8_ Col2)
+	{
+		Return
+		Combine
+		(
+			Math::Mean2(Get_H(Col1), Get_H(Col2)),
+			Math::Mean2(Get_S(Col1), Get_S(Col2)),
+			Math::Mean2(Get_V(Col1), Get_V(Col2))
+		);
+	}
+	
+	HSV8_ GetMean3(HSV8_ Col1, HSV8_ Col2, HSV8_ Col3)
+	{
+		Return
+		Combine
+		(
+			Math::Mean3(Get_H(Col1), Get_H(Col2), Get_H(Col3)),
+			Math::Mean3(Get_S(Col1), Get_S(Col2), Get_S(Col3)),
+			Math::Mean3(Get_V(Col1), Get_V(Col2), Get_V(Col3))
+		);
+	}
+	
+	HSV8_ GetMean4(HSV8_ Col1, HSV8_ Col2, HSV8_ Col3, HSV8_ Col4)
+	{
+		Return
+		Combine
+		(
+			Math::Mean4(Get_H(Col1), Get_H(Col2), Get_H(Col3), Get_H(Col4)),
+			Math::Mean4(Get_S(Col1), Get_S(Col2), Get_S(Col3), Get_S(Col4)),
+			Math::Mean4(Get_V(Col1), Get_V(Col2), Get_V(Col3), Get_V(Col4))
+		);
+	}
+	
+	HSV8_ GetMean5(HSV8_ Col1, HSV8_ Col2, HSV8_ Col3, HSV8_ Col4, HSV8_ Col5)
+	{
+		Return
+		Combine
+		(
+			Math::Mean5(Get_H(Col1), Get_H(Col2), Get_H(Col3), Get_H(Col4), Get_H(Col5)),
+			Math::Mean5(Get_S(Col1), Get_S(Col2), Get_S(Col3), Get_S(Col4), Get_S(Col5)),
+			Math::Mean5(Get_V(Col1), Get_V(Col2), Get_V(Col3), Get_V(Col4), Get_V(Col5))
+		);
+	}
+	
+	HSV8_ GetPropMean2(HSV8_ Col1, HSV8_ Col2)
+	{
+		Return
+		Combine
+		(
+			Math::IPropMean2(Get_H(Col1), Get_H(Col2)),
+			Math::IPropMean2(Get_S(Col1), Get_S(Col2)),
+			Math::IPropMean2(Get_V(Col1), Get_V(Col2))
+		);
+	}
+	
+	Fixed Get_NH(HSV8_ Col)	{Return (Col  & 0xFF0000)		 / 0xFF;}
+	Fixed Get_NS(HSV8_ Col)	{Return ((Col & 0x00FF00) << 8)	 / 0xFF;}
+	Fixed Get_NV(HSV8_ Col)	{Return ((Col & 0x0000FF) << 16) / 0xFF;}
+	
+	HSV8_ Set_NH(HSV8_ Col, Fixed Val)	{Return Set_H(Col, (Val * 255) >> 16);}
+	HSV8_ Set_NS(HSV8_ Col, Fixed Val)	{Return Set_S(Col, (Val * 255) >> 16);}
+	HSV8_ Set_NV(HSV8_ Col, Fixed Val)	{Return Set_V(Col, (Val * 255) >> 16);}
+	
+	Void To_V3	(HSV8_ Col, Vec3_T* Output)	{Vec3_Set(Output, Get_H(Col),	Get_S(Col),		Get_V(Col));}
+	Void To_NV3	(HSV8_ Col, Vec3_T* Output)	{Vec3_Set(Output, Get_NH(Col),	Get_NS(Col),	Get_NV(Col));}
+	
+	HSV8_ From_V3	(Vec3_T* V3) {Return Combine(V3.X, V3.Y, V3.Z);}
+	HSV8_ From_NV3	(Vec3_T* V3) {Return Combine((V3.X * 255) >> 16, (V3.Y * 255) >> 16, (V3.Z * 255) >> 16);}
+	
+	AHSV8_ To_AHSV8(HSV8_ Col, Byte Alpha = 255) {Return AHSV8::Set_A(Col, Alpha);		}
+	RGBA8_ To_HSVA8(HSV8_ Col, Byte Alpha = 255) {Return HSVA8::Set_A(Col << 8, Alpha);	}
+	
+	RGB8_ To_RGB8(HSV8_ Col)
+	{
+		Int ColV = Get_V(Col);	If(ColV == 0) {Return 0;}
+		Int ColS = Get_S(Col);
+		
+		RGB8_ Output;
+		
+		If(ColS == 0)
+		{
+			Output = RGB8::Set_R(Output, ColV);
+			Output = RGB8::Set_G(Output, ColV);
+			Return RGB8::Set_B(Output, ColV);
+		}
+		
+		Int ColH = Get_H(Col);
+		
+		Int Chroma	= (ColV * ColS) / 255;
+		Int HPrime	= ColH / 42;
+		Int X		= Chroma * (1 - Math::FMod(HPrime, 2));	//	IDK WTF IS THIS
+		Int M		= ColV - Chroma;
+		
+		Switch(HPrime)
+		{
+			Case 6:
+			Case 0:
+				Output =	RGB8::Set_R(Output, Chroma	+ M);
+				Output =	RGB8::Set_G(Output, X		+ M);
+				Return		RGB8::Set_B(Output, 0		+ M);
+			Case 1:
+				Output =	RGB8::Set_R(Output, X		+ M);
+				Output =	RGB8::Set_G(Output, Chroma	+ M);
+				Return		RGB8::Set_B(Output, 0		+ M);
+			Case 2:
+				Output =	RGB8::Set_R(Output, 0		+ M);
+				Output =	RGB8::Set_G(Output, Chroma	+ M);
+				Return		RGB8::Set_B(Output, X		+ M);
+			Case 3:
+				Output =	RGB8::Set_R(Output, 0		+ M);
+				Output =	RGB8::Set_G(Output, X		+ M);
+				Return		RGB8::Set_B(Output, Chroma	+ M);
+			Case 4:
+				Output =	RGB8::Set_R(Output, X		+ M);
+				Output =	RGB8::Set_G(Output, 0		+ M);
+				Return		RGB8::Set_B(Output, Chroma	+ M);
+			Case 5:
+				Output =	RGB8::Set_R(Output, Chroma	+ M);
+				Output =	RGB8::Set_G(Output, 0		+ M);
+				Return		RGB8::Set_B(Output, X		+ M);
+		}
+		
+		Return 0;
+	}
+	
+	ARGB8_ To_ARGB8(HSV8_ Col, Byte Alpha = 255)
+	{
+		Return ARGB8::Set_A(To_RGB8(Col), Alpha);
+	}
+	
+	RGBA8_ To_RGBA8(HSV8_ Col, Byte Alpha = 255)
+	{
+		Return RGBA8::Set_A(To_RGB8(Col) << 8, Alpha);
+	}
+}
+
+
+
+Namespace AHSV8
+{
+	AHSV8_ Get_A(AHSV8_ Col)			{Return ((Col	& 0xFF000000) >> 24) & 0xFF;}
+	AHSV8_ Get_H(AHSV8_ Col)			{Return (Col	& 0x00FF0000) >> 16;}
+	AHSV8_ Get_S(AHSV8_ Col)			{Return (Col	& 0x0000FF00) >> 8;}
+	AHSV8_ Get_V(AHSV8_ Col)			{Return  Col	& 0x000000FF;}
+	
+	AHSV8_ Set_A(AHSV8_ Col, Byte Val)	{Return (Col & 0x00FFFFFF) | (Math::ByteClamp(Val) << 24);}
+	AHSV8_ Set_H(AHSV8_ Col, Byte Val)	{Return (Col & 0xFF00FFFF) | (Math::ByteClamp(Val) << 16);}
+	AHSV8_ Set_S(AHSV8_ Col, Byte Val)	{Return (Col & 0xFFFF00FF) | (Math::ByteClamp(Val) << 8);}
+	AHSV8_ Set_V(AHSV8_ Col, Byte Val)	{Return (Col & 0xFFFFFF00) | (Math::ByteClamp(Val));}
+	
+	AHSV8_ Inv_A(AHSV8_ Col)			{Return Col ^ 0xFF000000;}
+	AHSV8_ Inv_H(AHSV8_ Col)			{Return Col ^ 0x00FF0000;}
+	AHSV8_ Inv_S(AHSV8_ Col)			{Return Col ^ 0x0000FF00;}
+	AHSV8_ Inv_V(AHSV8_ Col)			{Return Col ^ 0x000000FF;}
+	
+	AHSV8_ Inv(AHSV8_ Col)				{Return Col ^ UInt32_Max;}
+	
+	Byte GetAHSVMean(AHSV8_ Col)		{Return Math::Mean4(Get_A(Col), Get_H(Col), Get_S(Col), Get_V(Col));}
+	Byte GetHSVMean(AHSV8_ Col)			{Return Math::Mean3(Get_H(Col), Get_S(Col), Get_V(Col));			}
+	
+	AHSV8_ Combine(Byte Alpha, Byte Hue, Byte Saturation, Byte Value)
+	{
+		Return (Math::ByteClamp(Alpha) << 24) |(Math::ByteClamp(Hue) << 16) | (Math::ByteClamp(Saturation) << 8) | Math::ByteClamp(Value);
+	}
+	
+	AHSV8_ GetMean2(AHSV8_ Col1, AHSV8_ Col2)
+	{
+		Return
+		Combine
+		(
+			Math::Mean2(Get_A(Col1), Get_A(Col2)),
+			Math::Mean2(Get_H(Col1), Get_H(Col2)),
+			Math::Mean2(Get_S(Col1), Get_S(Col2)),
+			Math::Mean2(Get_V(Col1), Get_V(Col2))
+		);
+	}
+	
+	AHSV8_ GetMean3(AHSV8_ Col1, AHSV8_ Col2, AHSV8_ Col3)
+	{
+		Return
+		Combine
+		(
+			Math::Mean3(Get_A(Col1), Get_A(Col2), Get_A(Col3)),
+			Math::Mean3(Get_H(Col1), Get_H(Col2), Get_H(Col3)),
+			Math::Mean3(Get_S(Col1), Get_S(Col2), Get_S(Col3)),
+			Math::Mean3(Get_V(Col1), Get_V(Col2), Get_V(Col3))
+		);
+	}
+	
+	AHSV8_ GetMean4(AHSV8_ Col1, AHSV8_ Col2, AHSV8_ Col3, AHSV8_ Col4)
+	{
+		Return
+		Combine
+		(
+			Math::Mean4(Get_A(Col1), Get_A(Col2), Get_A(Col3), Get_A(Col4)),
+			Math::Mean4(Get_H(Col1), Get_H(Col2), Get_H(Col3), Get_H(Col4)),
+			Math::Mean4(Get_S(Col1), Get_S(Col2), Get_S(Col3), Get_S(Col4)),
+			Math::Mean4(Get_V(Col1), Get_V(Col2), Get_V(Col3), Get_V(Col4))
+		);
+	}
+	
+	AHSV8_ GetMean5(AHSV8_ Col1, AHSV8_ Col2, AHSV8_ Col3, AHSV8_ Col4, AHSV8_ Col5)
+	{
+		Return
+		Combine
+		(
+			Math::Mean5(Get_A(Col1), Get_A(Col2), Get_A(Col3), Get_A(Col4), Get_A(Col5)),
+			Math::Mean5(Get_H(Col1), Get_H(Col2), Get_H(Col3), Get_H(Col4), Get_H(Col5)),
+			Math::Mean5(Get_S(Col1), Get_S(Col2), Get_S(Col3), Get_S(Col4), Get_S(Col5)),
+			Math::Mean5(Get_V(Col1), Get_V(Col2), Get_V(Col3), Get_V(Col4), Get_V(Col5))
+		);
+	}
+	
+	AHSV8_ GetPropMean2(AHSV8_ Col1, AHSV8_ Col2)
+	{
+		Return
+		Combine
+		(
+			Math::IPropMean2(Get_A(Col1), Get_A(Col2)),
+			Math::IPropMean2(Get_H(Col1), Get_H(Col2)),
+			Math::IPropMean2(Get_S(Col1), Get_S(Col2)),
+			Math::IPropMean2(Get_V(Col1), Get_V(Col2))
+		);
+	}
+	
+	Fixed Get_NA(AHSV8_ Col)				{Return (((Col & 0xFF000000) >> 8) & 0xFF)	/ 0xFF;}
+	Fixed Get_NH(AHSV8_ Col)				{Return (Col   & 0x00FF0000)				/ 0xFF;}
+	Fixed Get_NS(AHSV8_ Col)				{Return ((Col  & 0x0000FF00) << 8)			/ 0xFF;}
+	Fixed Get_NV(AHSV8_ Col)				{Return ((Col  & 0x000000FF) << 16)			/ 0xFF;}
+	
+	AHSV8_ Set_NA(AHSV8_ Col, Fixed Val)	{Return Set_A(Col, (Val * 255) >> 16);}
+	AHSV8_ Set_NH(AHSV8_ Col, Fixed Val)	{Return Set_H(Col, (Val * 255) >> 16);}
+	AHSV8_ Set_NS(AHSV8_ Col, Fixed Val)	{Return Set_S(Col, (Val * 255) >> 16);}
+	AHSV8_ Set_NV(AHSV8_ Col, Fixed Val)	{Return Set_V(Col, (Val * 255) >> 16);}
+	
+	Void To_V4	(AHSV8_ Col, Vec4_T* Output)	{Vec4_Set(Output, Get_A(Col),	Get_H(Col),		Get_S(Col),		Get_V(Col));}
+	Void To_NV4	(AHSV8_ Col, Vec4_T* Output)	{Vec4_Set(Output, Get_NA(Col),	Get_NH(Col),	Get_NS(Col),	Get_NV(Col));}
+	
+	AHSV8_ From_V4	(Vec4_T* V4) {Return Combine(V4.X, V4.Y, V4.Z, V4.W);}
+	AHSV8_ From_NV4	(Vec4_T* V4) {Return Combine((V4.X * 255) >> 16, (V4.Y * 255) >> 16, (V4.Z * 255) >> 16, (V4.W * 255) >> 16);}
+	
+	HSV8_ To_HSV8(AHSV8_ Col, Bool PremultAlpha = False)
+	{
+		If(PremultAlpha)
+		{
+			Return HSV8::Set_V(Col & 0x00FFFF00, (Get_V(Col) * Get_A(Col)) / 255);
+		}
+		Return Col & UInt24_Max;
+	}
+	
+	HSVA8_ To_HSVA8(AHSV8_ Col) {Return HSVA8::Set_A(Col << 8, Get_A(Col));}
+	
+	RGB8_ To_RGB8(AHSV8_ Col, Bool PremultAlpha = False)
+	{
+		Col = Col & UInt24_Max;
+		Int ColV = Get_V(Col);	If(PremultAlpha)	{ColV = (ColV * Get_A(Col)) / 255;	}
+								If(ColV == 0)		{Return 0;							}
+		
+		Int ColS = Get_S(Col);
+		
+		RGB8_ Output;
+		
+		If(ColS == 0)
+		{
+			Output = RGB8::Set_R(Output, ColV);
+			Output = RGB8::Set_G(Output, ColV);
+			Return RGB8::Set_B(Output, ColV);
+		}
+		
+		Int ColH = Get_H(Col);
+		
+		Int Chroma	= (ColV * ColS) / 255;
+		Int HPrime	= ColH / 42;
+		Int X		= Chroma * (1 - Math::FMod(HPrime, 2));	//	IDK WTF IS THIS
+		Int M		= ColV - Chroma;
+		
+		Switch(HPrime)
+		{
+			Case 6:
+			Case 0:
+				Output =	RGB8::Set_R(Output, Chroma	+ M);
+				Output =	RGB8::Set_G(Output, X		+ M);
+				Return		RGB8::Set_B(Output, 0		+ M);
+			Case 1:
+				Output =	RGB8::Set_R(Output, X		+ M);
+				Output =	RGB8::Set_G(Output, Chroma	+ M);
+				Return		RGB8::Set_B(Output, 0		+ M);
+			Case 2:
+				Output =	RGB8::Set_R(Output, 0		+ M);
+				Output =	RGB8::Set_G(Output, Chroma	+ M);
+				Return		RGB8::Set_B(Output, X		+ M);
+			Case 3:
+				Output =	RGB8::Set_R(Output, 0		+ M);
+				Output =	RGB8::Set_G(Output, X		+ M);
+				Return		RGB8::Set_B(Output, Chroma	+ M);
+			Case 4:
+				Output =	RGB8::Set_R(Output, X		+ M);
+				Output =	RGB8::Set_G(Output, 0		+ M);
+				Return		RGB8::Set_B(Output, Chroma	+ M);
+			Case 5:
+				Output =	RGB8::Set_R(Output, Chroma	+ M);
+				Output =	RGB8::Set_G(Output, 0		+ M);
+				Return		RGB8::Set_B(Output, X		+ M);
+		}
+		
+		Return 0;
+	}
+	
+	ARGB8_ To_ARGB8(AHSV8_ Col)
+	{
+		Return ARGB8::Set_A(To_RGB8(Col), Get_A(Col));
+	}
+	
+	RGBA8_ To_RGBA8(AHSV8_ Col)
+	{
+		Return RGBA8::Set_A(To_RGB8(Col) << 8, Get_A(Col));
+	}
+}
+
+
+
+Namespace HSVA8
+{
+	HSVA8_ Get_H(HSVA8_ Col)			{Return ((Col	& 0xFF000000) >> 24) & 0xFF;}
+	HSVA8_ Get_S(HSVA8_ Col)			{Return (Col	& 0x00FF0000) >> 16;}
+	HSVA8_ Get_V(HSVA8_ Col)			{Return (Col	& 0x0000FF00) >> 8;	}
+	HSVA8_ Get_A(HSVA8_ Col)			{Return  Col	& 0x000000FF;		}
+	
+	HSVA8_ Set_H(HSVA8_ Col, Byte Val)	{Return (Col & 0x00FFFFFF) | (Math::ByteClamp(Val) << 24);	}
+	HSVA8_ Set_S(HSVA8_ Col, Byte Val)	{Return (Col & 0xFF00FFFF) | (Math::ByteClamp(Val) << 16);	}
+	HSVA8_ Set_V(HSVA8_ Col, Byte Val)	{Return (Col & 0xFFFF00FF) | (Math::ByteClamp(Val) << 8);	}
+	HSVA8_ Set_A(HSVA8_ Col, Byte Val)	{Return (Col & 0xFFFFFF00) | (Math::ByteClamp(Val));		}
+	
+	HSVA8_ Inv_H(HSVA8_ Col)			{Return Col ^ 0xFF000000;}
+	HSVA8_ Inv_S(HSVA8_ Col)			{Return Col ^ 0x00FF0000;}
+	HSVA8_ Inv_V(HSVA8_ Col)			{Return Col ^ 0x0000FF00;}
+	HSVA8_ Inv_A(HSVA8_ Col)			{Return Col ^ 0x000000FF;}
+	
+	HSVA8_ Inv(HSVA8_ Col)				{Return Col ^ UInt32_Max;}
+	
+	Byte GetHSVAMean(HSVA8_ Col)		{Return Math::Mean4(Get_H(Col), Get_S(Col), Get_V(Col), Get_A(Col));}
+	Byte GetHSVMean(HSVA8_ Col)			{Return Math::Mean3(Get_H(Col), Get_S(Col), Get_V(Col));			}
+	
+	HSVA8_ Combine(Byte Red, Byte Green, Byte Blue, Byte Alpha)
+	{
+		Return (Math::ByteClamp(Red) << 24) |(Math::ByteClamp(Green) << 16) | (Math::ByteClamp(Blue) << 8) | Math::ByteClamp(Alpha);
+	}
+	
+	HSVA8_ GetMean2(HSVA8_ Col1, HSVA8_ Col2)
+	{
+		Return
+		Combine
+		(
+			Math::Mean2(Get_H(Col1), Get_H(Col2)),
+			Math::Mean2(Get_S(Col1), Get_S(Col2)),
+			Math::Mean2(Get_V(Col1), Get_V(Col2)),
+			Math::Mean2(Get_A(Col1), Get_A(Col2))
+		);
+	}
+	
+	HSVA8_ GetMean3(HSVA8_ Col1, HSVA8_ Col2, HSVA8_ Col3)
+	{
+		Return
+		Combine
+		(
+			Math::Mean3(Get_H(Col1), Get_H(Col2), Get_H(Col3)),
+			Math::Mean3(Get_S(Col1), Get_S(Col2), Get_S(Col3)),
+			Math::Mean3(Get_V(Col1), Get_V(Col2), Get_V(Col3)),
+			Math::Mean3(Get_A(Col1), Get_A(Col2), Get_A(Col3))
+		);
+	}
+	
+	HSVA8_ GetMean4(HSVA8_ Col1, HSVA8_ Col2, HSVA8_ Col3, HSVA8_ Col4)
+	{
+		Return
+		Combine
+		(
+			Math::Mean4(Get_H(Col1), Get_H(Col2), Get_H(Col3), Get_H(Col4)),
+			Math::Mean4(Get_S(Col1), Get_S(Col2), Get_S(Col3), Get_S(Col4)),
+			Math::Mean4(Get_V(Col1), Get_V(Col2), Get_V(Col3), Get_V(Col4)),
+			Math::Mean4(Get_A(Col1), Get_A(Col2), Get_A(Col3), Get_A(Col4))
+		);
+	}
+	
+	HSVA8_ GetMean5(HSVA8_ Col1, HSVA8_ Col2, HSVA8_ Col3, HSVA8_ Col4, HSVA8_ Col5)
+	{
+		Return
+		Combine
+		(
+			Math::Mean5(Get_H(Col1), Get_H(Col2), Get_H(Col3), Get_H(Col4), Get_H(Col5)),
+			Math::Mean5(Get_S(Col1), Get_S(Col2), Get_S(Col3), Get_S(Col4), Get_S(Col5)),
+			Math::Mean5(Get_V(Col1), Get_V(Col2), Get_V(Col3), Get_V(Col4), Get_V(Col5)),
+			Math::Mean5(Get_A(Col1), Get_A(Col2), Get_A(Col3), Get_A(Col4), Get_A(Col5))
+		);
+	}
+	
+	HSVA8_ GetPropMean2(HSVA8_ Col1, HSVA8_ Col2)
+	{
+		Return
+		Combine
+		(
+			Math::IPropMean2(Get_H(Col1), Get_H(Col2)),
+			Math::IPropMean2(Get_S(Col1), Get_S(Col2)),
+			Math::IPropMean2(Get_V(Col1), Get_V(Col2)),
+			Math::IPropMean2(Get_A(Col1), Get_A(Col2))
+		);
+	}
+	
+	Fixed Get_NH(HSVA8_ Col)				{Return (((Col & 0xFF000000) >> 8) & 0xFF)	/ 0xFF;}
+	Fixed Get_NS(HSVA8_ Col)				{Return (Col   & 0x00FF0000)				/ 0xFF;}
+	Fixed Get_NV(HSVA8_ Col)				{Return ((Col  & 0x0000FF00) << 8)			/ 0xFF;}
+	Fixed Get_NA(HSVA8_ Col)				{Return ((Col  & 0x000000FF) << 16)			/ 0xFF;}
+	
+	HSVA8_ Set_NH(HSVA8_ Col, Fixed Val)	{Return Set_H(Col, (Val * 255) >> 16);}
+	HSVA8_ Set_NS(HSVA8_ Col, Fixed Val)	{Return Set_S(Col, (Val * 255) >> 16);}
+	HSVA8_ Set_NV(HSVA8_ Col, Fixed Val)	{Return Set_V(Col, (Val * 255) >> 16);}
+	HSVA8_ Set_NA(HSVA8_ Col, Fixed Val)	{Return Set_A(Col, (Val * 255) >> 16);}
+	
+	Void To_V4	(HSVA8_ Col, Vec4_T* Output)	{Vec4_Set(Output, Get_H(Col),	Get_S(Col),		Get_V(Col),		Get_A(Col));}
+	Void To_NV4	(HSVA8_ Col, Vec4_T* Output)	{Vec4_Set(Output, Get_NH(Col),	Get_NS(Col),	Get_NV(Col),	Get_NA(Col));}
+	
+	HSVA8_ From_V4	(Vec4_T* V4) {Return Combine(V4.X, V4.Y, V4.Z, V4.W);}
+	HSVA8_ From_NV4	(Vec4_T* V4) {Return Combine((V4.X * 255) >> 16, (V4.Y * 255) >> 16, (V4.Z * 255) >> 16, (V4.W * 255) >> 16);}
+	
+	HSV8_ To_HSV8(HSVA8_ Col, Bool PremultAlpha = False)
+	{
+		If(PremultAlpha)
+		{
+			Return HSV8::Set_V((Col >> 8) & 0x00FFFF00, (Get_V(Col) * Get_A(Col)) / 255);
+		}
+		Return (Col >> 8) & UInt24_Max;
+	}
+	
+	AHSV8_ To_AHSV8(HSVA8_ Col) {Return AHSV8::Set_A((Col >> 8) & UInt24_Max, Get_A(Col));}
+	
+	RGB8_ To_RGB8(HSVA8_ Col, Bool PremultAlpha = False)
+	{
+		Col = (Col >> 8) & UInt24_Max;
+		Int ColV = Get_V(Col);	If(PremultAlpha)	{ColV = (ColV * Get_A(Col)) / 255;	}
+								If(ColV == 0)		{Return 0;							}
+		
+		Int ColS = Get_S(Col);
+		
+		RGB8_ Output;
+		
+		If(ColS == 0)
+		{
+			Output = RGB8::Set_R(Output, ColV);
+			Output = RGB8::Set_G(Output, ColV);
+			Return RGB8::Set_B(Output, ColV);
+		}
+		
+		Int ColH = Get_H(Col);
+		
+		Int Chroma	= (ColV * ColS) / 255;
+		Int HPrime	= ColH / 42;
+		Int X		= Chroma * (1 - Math::FMod(HPrime, 2));	//	IDK WTF IS THIS
+		Int M		= ColV - Chroma;
+		
+		Switch(HPrime)
+		{
+			Case 6:
+			Case 0:
+				Output =	RGB8::Set_R(Output, Chroma	+ M);
+				Output =	RGB8::Set_G(Output, X		+ M);
+				Return		RGB8::Set_B(Output, 0		+ M);
+			Case 1:
+				Output =	RGB8::Set_R(Output, X		+ M);
+				Output =	RGB8::Set_G(Output, Chroma	+ M);
+				Return		RGB8::Set_B(Output, 0		+ M);
+			Case 2:
+				Output =	RGB8::Set_R(Output, 0		+ M);
+				Output =	RGB8::Set_G(Output, Chroma	+ M);
+				Return		RGB8::Set_B(Output, X		+ M);
+			Case 3:
+				Output =	RGB8::Set_R(Output, 0		+ M);
+				Output =	RGB8::Set_G(Output, X		+ M);
+				Return		RGB8::Set_B(Output, Chroma	+ M);
+			Case 4:
+				Output =	RGB8::Set_R(Output, X		+ M);
+				Output =	RGB8::Set_G(Output, 0		+ M);
+				Return		RGB8::Set_B(Output, Chroma	+ M);
+			Case 5:
+				Output =	RGB8::Set_R(Output, Chroma	+ M);
+				Output =	RGB8::Set_G(Output, 0		+ M);
+				Return		RGB8::Set_B(Output, X		+ M);
+		}
+		
+		Return 0;
+	}
+	
+	ARGB8_ To_ARGB8(HSVA8_ Col)
+	{
+		Return ARGB8::Set_A(To_RGB8(Col), Get_A(Col));
+	}
+	
+	RGBA8_ To_RGBA8(HSVA8_ Col)
+	{
+		Return RGBA8::Set_A(To_RGB8(Col) << 8, Get_A(Col));
+	}
+}
+
+Namespace Graphics
+{
+	Enum
+	{
+		ARatio_21_9		= 152917,						//	2.3333282470703125	| 2.(3)
+		ARatio_17_10	= 111411,						//	1.6999969482421875	| 1.7
+		ARatio_16_10	= 104857,						//	1.5999908447265625	| 1.6
+		ARatio_16_9		= 116508,						//	1.77777099609375	| 1.(7)
+		ARatio_5_4		= 81920 ,						//	1.25				| 1.25
+		ARatio_4_3		= 87381 , 						//	1.3333282470703125	| 1.(3)
+		ARatio_1_1		= 65536	  						//	1.0					| 1.0
+	};
+	
+	Internal Flags_ _WV3Proj__FlagFmt = (HUDMsg_Plain | HUDMsg_FadeOut | HUDMsg_FadeInOut | HUDMsg_TypeOn)^UInt32_Max;
+	
+	Fixed GetRatioScaling(Fixed VHUDRatio)				//	X Scaling
+	{
+		If(VHUDRatio == 0){Return 1.0;}
+		Switch(VHUDRatio)
+		{
+			Case ARatio_21_9:	Return 37449;			//	0.5714263916015625	| 1.(3) / 2.(3)	irrational
+			Case ARatio_17_10:	Return 51400;			//	0.7843017578125		| 1.(3) / 1.7	irrational
+			Case ARatio_16_10:	Return 54613;			//	0.8333282470703125	| 0.8(3)
+			Case ARatio_16_9:	Return 49152;			//	0.75				| 0.75
+			Case ARatio_5_4:	Return 69905;			//	1.0666656494140625	| 1.0(6)
+			Case ARatio_4_3:	Return 65536;			//	1.0					| 1.0
+			Case ARatio_1_1:	Return 87381;			//	1.3333282470703125	| 1.(3)
+		}
+		Return FxD(ARatio_4_3, VHUDRatio);
+	}
+	
+	Fixed GetWndRatio()
+	{
+		Int CNum = ConsolePlayerNumber();
+		Switch(GetUserCVar(CNum, "vid_aspect"))
+		{
+			Case 1:	Return ARatio_16_9	;
+			Case 2:	Return ARatio_16_10	;
+			Case 3:	Return ARatio_4_3	;
+			Case 4:	Return ARatio_5_4	;
+			Case 5: Return ARatio_17_10	;
+		}
+		If(GetUserCVar(CNum, "vid_nowidescreen"))
+		{
+			If(GetUserCVar(CNum, "vid_tft"))
+			{
+				Int DH = GetUserCVar(CNum, "vid_defheight");
+				Int DW = GetUserCVar(CNum, "vid_defwidth");
+				
+				If	(
+						((DW * ARatio_5_4) == (DH << 16))||
+						((DH * ARatio_5_4) == (DW << 16))
+					)
+				{
+					Return ARatio_5_4;
+				}
+			}
+			Return ARatio_4_3;
+		}
+		Return FxD(GetScreenWidth()<<16, GetScreenHeight()<<16);
+	}
+	
+	Fixed RatioMap(Fixed Val, Fixed Max, Fixed VHUDRatio)//For true HUD coordinates
+	{
+		If	(	(VHUDRatio == ARatio_4_3)	||
+				(VHUDRatio == 0)			||
+				(Max == 0.0)					){Return Val;}
+		
+		Fixed NMax = FxD(Max, Math::DDiv(GetRatioScaling(VHUDRatio), 2));
+		
+		Return Math::Map(Val, Max - NMax, NMax, 0.0, Max);
+	}
+	
+	Fixed FullScreenVFHUD(Fixed VFHUD_X, Fixed VFHUD_Y)//VFHUD - Virtual Fixed(type) HUD
+	{
+		If	(	(VFHUD_X == 0) ||
+				(VFHUD_Y == 0)		)	{Return VFHUD_X;}
+		Fixed Ratio = FxD(VFHUD_X, VFHUD_Y);
+		
+		Switch(Ratio)
+		{
+			Case ARatio_21_9:
+				VFHUD_X = FxM(VFHUD_X, 37449);
+				Break;
+			
+			Case ARatio_17_10:
+				VFHUD_X = FxM(VFHUD_X, 51400);
+				Break;
+			
+			Case ARatio_16_10:
+				VFHUD_X = FxM(VFHUD_X, 54613);
+				Break;
+			
+			Case ARatio_16_9:
+				VFHUD_X = FxM(VFHUD_X, 49152);
+				Break;
+			
+			Case ARatio_5_4:
+				VFHUD_X = FxM(VFHUD_X, 69905);
+				Break;
+			
+			Case ARatio_4_3:Break;
+			
+			Case ARatio_1_1:
+				VFHUD_X = FxM(VFHUD_X, 87381);
+				Break;
+			
+			Default:
+				VFHUD_X = FxM(VFHUD_X, FxD(ARatio_4_3, Ratio));
+				Break;
+		}
+		
+		SetHUDSize(VFHUD_X >> 16, VFHUD_Y >> 16, False);
+		Return VFHUD_X;
+	}
+	
+	Void FullScreenVFV2HUD(Vec2_T* VFV2HUD)//VFV2HUD - Virtual Fixed(type) 2D Vector HUD
+	{
+		If	(	(VFV2HUD.X == 0) ||
+				(VFV2HUD.Y == 0)	)	{Return;}
+		Fixed Ratio = FxD(VFV2HUD.X, VFV2HUD.Y);
+		
+		Switch(Ratio)
+		{
+			Case ARatio_21_9:
+				VFV2HUD.X = FxM(VFV2HUD.X, 37449);
+				Break;
+			
+			Case ARatio_17_10:
+				VFV2HUD.X = FxM(VFV2HUD.X, 51400);
+				Break;
+			
+			Case ARatio_16_10:
+				VFV2HUD.X = FxM(VFV2HUD.X, 54613);
+				Break;
+			
+			Case ARatio_16_9:
+				VFV2HUD.X = FxM(VFV2HUD.X, 49152);
+				Break;
+			
+			Case ARatio_5_4:
+				VFV2HUD.X = FxM(VFV2HUD.X, 69905);
+				Break;
+			
+			Case ARatio_4_3:Break;
+			
+			Case ARatio_1_1:
+				VFV2HUD.X = FxM(VFV2HUD.X, 87381);
+				Break;
+			
+			Default:
+				VFV2HUD.X = FxM(VFV2HUD.X, FxD(ARatio_4_3, Ratio));
+				Break;
+		}
+	}
+	
+	Fixed Pl_FxHlFOV(Int PNum)//PLayer FiXed HaLf FOV
+	{
+		Return (GetPlayerInfo(PNum, PlayerInfo_FOV) << 16) / 720;
+	}/*
+
+
+
+
+
+
+	▀▀█ █▀▄    █▀▄ █▀▄ █▀█   █ █▀▀ █▀▀ ▀█▀ ▀█▀ █▀█ █  █
+	▄▄█ █ █    █▄▀ █▄▀ █ █   █ █▄▄ █    █   █  █ █ █▄ █
+	  █ █ █    █   █ █ █ █   █ █   █    █   █  █ █ █ ▀█
+	▀▀▀ ▀▀     ▀   ▀ ▀ ▀▀▀ ▀▀▀ ▀▀▀ ▀▀▀  ▀  ▀▀▀ ▀▀▀ ▀  ▀
+
+
+
+	Corona - Texture that used to imitate bloom from a point in Unreal Engine
+	It's necessary to use ``SetFont`` before calling theese functions.
+	
+	Draw_Corona[__FO\FIO][_S[_DL]]		- For coronas rendering. Do not have extra flags and 2D offsets
+	
+	Draw_WV3Image[__FO\FIO][_S[_DL]]	- For general image render. Have extra flags argument and 2D offsets
+	Draw_WV3Text[__FO\FIO][_S[_DL]]		- For text. Same as ``Draw_WV3Image``
+	
+	
+	_FO		- Fade Out. Image fades out when it suddenly disappears. HUDMsg_FadeOut mode is used.
+	
+	_FIO	- Fade In & Out. Same as ``_FO``, but image appears smoothly.
+			  Every time when function with this flag calls with the same ID, it resets image's alpha to starting alpha.
+			  HUDMsg_FadeInOut mode is used.
+			  
+	_S		- Smooth. Adds extra alpha calculations to "erase" image around screen edges.
+	
+	_DL		- Double Layer. Prints 2 images\text at the same time with different alpha to create effect of high gamma
+			  (like coronas in UE 2.5, that have high gamma).
+*/
+	
+	Void Draw_Corona__FO
+	(
+		Vec3_T*	Point,
+		Vec2_T*	VFHUD,
+		Vec3_T*	ScaleX, Vec3_T* ScaleY,
+		Vec4_T*	Alpha,
+		Int		ID,
+		Fixed	FxHlFOV		= 0.125,//== FOV 90
+		Fixed	FadeOutTime	= 0.75,
+		Fixed 	HoldTime	= 0.04,
+		Fixed	Dst			= 0.0
+	)
+	{
+		Fixed dX = Point.X - GetActorX(0);
+		Fixed dY = Point.Y - GetActorY(0);
+		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
+
+		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
+
+		If(_Tmp::V3_0.X <= 0)		{Return;}
+
+		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+
+		dX = FxM(VFHUD.X, Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z));
+		dY = FxM(VFHUD.Y, Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z));
+
+		SetHUDSize(dX >> 16, dY >> 16, False);
+
+		dX /= 2; dY /= 2;
+
+		dX = dX -		FxM(FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), dX);
+		dY = dY -	FxM(FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), dY), 1.6);
+
+		HUDMessage
+		(
+			s:"A"; HUDMsg_FadeOut | HUDMsg_Layer_UnderHUD | HUDMsg_Addblend | HUDMsg_Alpha,
+			ID, CR_Untranslated,
+			dX & 0xFFFF0000,
+			dY & 0xFFFF0000,
+			HoldTime, FadeOutTime,
+			FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W)
+		);
+	}
+	
+	Void Draw_Corona__FO_S
+	(
+		Vec3_T*	Point,
+		Vec2_T*	VFHUD,
+		Vec3_T*	ScaleX, Vec3_T* ScaleY,
+		Vec4_T*	Alpha,
+		Int		ID,
+		Fixed	FxHlFOV			= 0.125,//== FOV 90
+		Fixed	SV2DstFadeMul	= 8.0,
+		Fixed	SV2DstSizeDiv	= 256,
+		Fixed	FadeOutTime		= 0.75,
+		Fixed 	HoldTime		= 0.04,
+		Fixed	Dst				= 0.0
+	)
+	{
+		Fixed dX = Point.X - GetActorX(0);
+		Fixed dY = Point.Y - GetActorY(0);
+		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
+
+		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
+
+		If(_Tmp::V3_0.X <= 0)		{Return;}
+
+		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+
+		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
+		Fixed HUDYSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
+
+		Fixed HUDX = Math::NoZero(FxM(VFHUD.X, HUDXSize));
+		Fixed HUDY = Math::NoZero(FxM(VFHUD.Y, HUDYSize));
+
+		SetHUDSize(HUDX >> 16, HUDY >> 16, False);
+
+		dX = HUDX/2; dY = HUDY/2;
+
+		HUDX =		FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV))		;
+		HUDY =	FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), 1.6);
+
+		dX = dX - FxM(HUDX, dX);
+		dY = dY - FxM(HUDY, dY);
+
+		dZ = VFHUD.X/2;
+		HUDX = RatioMap(dZ + FxM(HUDX, dZ), VFHUD.X, FxD(VFHUD.X, VFHUD.Y));
+
+		dZ = VFHUD.Y/2;
+		HUDY = dZ - FxM(HUDY, dZ);
+
+		HUDMessage
+		(
+			s:"A"; HUDMsg_FadeOut | HUDMsg_Layer_UnderHUD | HUDMsg_Addblend | HUDMsg_Alpha,
+			ID, CR_Untranslated,
+			dX & 0xFFFF0000,
+			dY & 0xFFFF0000,
+			HoldTime, FadeOutTime,
+			FxM
+			(
+				FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W),
+				Math::Clamp
+				(
+					FxM
+					(
+						Math::Min2(	Math::HalfPoint(FxD(HUDX, VFHUD.X), 1.0),
+									Math::HalfPoint(FxD(HUDY, VFHUD.Y), 1.0)	) +
+						Math::Mean2
+						(
+							FxD(SV2DstSizeDiv, Math::FPower2(HUDXSize/2)),
+							FxD(SV2DstSizeDiv, Math::FPower2(HUDYSize/2))
+						),
+						SV2DstFadeMul
+					), 0.0, 1.0
+				)
+			)
+		);
+	}
+	
+	Void Draw_Corona__FO_S_DL
+	(
+		Vec3_T*	Point,
+		Vec2_T*	VFHUD,
+		Vec3_T*	ScaleX, Vec3_T* ScaleY,
+		Vec4_T*	Alpha,
+		Int		ID1,
+		Int		ID2,
+		Fixed	FxHlFOV			= 0.125,//== FOV 90
+		Fixed	SV2DstFadeMul1	= 8.0,
+		Fixed	SV2DstFadeMul2	= 2.0,
+		Fixed	SV2DstSizeDiv	= 256,
+		Fixed	FadeOutTime		= 0.75,
+		Fixed 	HoldTime		= 0.04,
+		Fixed	Dst				= 0.0
+	)
+	{
+		Fixed dX = Point.X - GetActorX(0);
+		Fixed dY = Point.Y - GetActorY(0);
+		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
+
+		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
+
+		If(_Tmp::V3_0.X <= 0)		{Return;}
+
+		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+
+		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
+		Fixed HUDYSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
+
+		Fixed HUDX = Math::NoZero(FxM(VFHUD.X, HUDXSize));
+		Fixed HUDY = Math::NoZero(FxM(VFHUD.Y, HUDYSize));
+
+		SetHUDSize(HUDX >> 16, HUDY >> 16, False);
+
+		dX = HUDX/2; dY = HUDY/2;
+
+		HUDX =		FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV))		;
+		HUDY =	FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), 1.6);
+
+		dX = dX - FxM(HUDX, dX);
+		dY = dY - FxM(HUDY, dY);
+
+		dZ = VFHUD.X/2;
+		HUDX = RatioMap(dZ + FxM(HUDX, dZ), VFHUD.X, FxD(VFHUD.X, VFHUD.Y));
+
+		dZ = VFHUD.Y/2;
+		HUDY = dZ - FxM(HUDY, dZ);
+
+		dZ =	Math::Min2(	Math::HalfPoint(FxD(HUDX, VFHUD.X), 1.0),
+							Math::HalfPoint(FxD(HUDY, VFHUD.Y), 1.0)	) +
+				Math::Mean2
+				(
+					FxD(SV2DstSizeDiv, Math::FPower2(HUDXSize/2)),
+					FxD(SV2DstSizeDiv, Math::FPower2(HUDYSize/2))
+				);
+		FxHlFOV = FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W);
+
+		HUDMessage
+		(
+			s:"A"; HUDMsg_FadeOut | HUDMsg_Layer_UnderHUD | HUDMsg_Addblend | HUDMsg_Alpha,
+			ID1, CR_Untranslated,
+			dX & 0xFFFF0000,
+			dY & 0xFFFF0000,
+			HoldTime, FadeOutTime,
+			FxM(FxHlFOV, Math::Clamp(FxM(dZ, SV2DstFadeMul1), 0.0, 1.0))
+		);
+		HUDMessage
+		(
+			s:"A"; HUDMsg_FadeOut | HUDMsg_Layer_UnderHUD | HUDMsg_Addblend | HUDMsg_Alpha,
+			ID2, CR_Untranslated,
+			dX & 0xFFFF0000,
+			dY & 0xFFFF0000,
+			HoldTime, FadeOutTime/2,
+			FxM(FxHlFOV, Math::Clamp(FxM(dZ, SV2DstFadeMul2), 0.0, 1.0))/2
+		);
+	}
+	
+	Void Draw_Corona
+	(
+		Vec3_T*	Point,
+		Vec2_T*	VFHUD,
+		Vec3_T*	ScaleX, Vec3_T* ScaleY,
+		Vec4_T*	Alpha,
+		Int		ID,
+		Fixed	FxHlFOV		= 0.125,//== FOV 90
+		Fixed	FadeOutTime	= 0.75,
+		Fixed 	HoldTime	= 0.04,
+		Fixed	Dst			= 0.0
+	)
+	{
+		Fixed dX = Point.X - GetActorX(0);
+		Fixed dY = Point.Y - GetActorY(0);
+		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
+
+		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
+
+		If(_Tmp::V3_0.X <= 0)		{Return;}
+
+		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+
+		dX = FxM(VFHUD.X, Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z));
+		dY = FxM(VFHUD.Y, Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z));
+
+		SetHUDSize(dX >> 16, dY >> 16, False);
+
+		dX /= 2; dY /= 2;
+
+		dX = dX -		FxM(FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), dX);
+		dY = dY -	FxM(FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), dY), 1.6);
+
+		HUDMessage
+		(
+			s:"A"; HUDMsg_Plain | HUDMsg_Layer_UnderHUD | HUDMsg_Addblend | HUDMsg_Alpha,
+			ID, CR_Untranslated,
+			dX & 0xFFFF0000,
+			dY & 0xFFFF0000,
+			HoldTime,
+			FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W)
+		);
+	}
+	
+	Void Draw_Corona__S
+	(
+		Vec3_T*	Point,
+		Vec2_T*	VFHUD,
+		Vec3_T*	ScaleX, Vec3_T* ScaleY,
+		Vec4_T*	Alpha,
+		Int		ID,
+		Fixed	FxHlFOV			= 0.125,//== FOV 90
+		Fixed	SV2DstFadeMul	= 8.0,
+		Fixed	SV2DstSizeDiv	= 256,
+		Fixed 	HoldTime		= 0.04,
+		Fixed	Dst				= 0.0
+	)
+	{
+		Fixed dX = Point.X - GetActorX(0);
+		Fixed dY = Point.Y - GetActorY(0);
+		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
+
+		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
+
+		If(_Tmp::V3_0.X <= 0)		{Return;}
+
+		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+
+		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
+		Fixed HUDYSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
+
+		Fixed HUDX = Math::NoZero(FxM(VFHUD.X, HUDXSize));
+		Fixed HUDY = Math::NoZero(FxM(VFHUD.Y, HUDYSize));
+
+		SetHUDSize(HUDX >> 16, HUDY >> 16, False);
+
+		dX = HUDX/2; dY = HUDY/2;
+
+		HUDX =		FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV))		;
+		HUDY =	FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), 1.6);
+
+		dX = dX - FxM(HUDX, dX);
+		dY = dY - FxM(HUDY, dY);
+
+		dZ = VFHUD.X/2;
+		HUDX = RatioMap(dZ + FxM(HUDX, dZ), VFHUD.X, FxD(VFHUD.X, VFHUD.Y));
+
+		dZ = VFHUD.Y/2;
+		HUDY = dZ - FxM(HUDY, dZ);
+
+		HUDMessage
+		(
+			s:"A"; HUDMsg_Plain | HUDMsg_Layer_UnderHUD | HUDMsg_Addblend | HUDMsg_Alpha,
+			ID, CR_Untranslated,
+			dX & 0xFFFF0000,
+			dY & 0xFFFF0000,
+			HoldTime,
+			FxM
+			(
+				FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W),
+				Math::Clamp
+				(
+					FxM
+					(
+						Math::Min2(	Math::HalfPoint(FxD(HUDX, VFHUD.X), 1.0),
+									Math::HalfPoint(FxD(HUDY, VFHUD.Y), 1.0)	) +
+						Math::Mean2
+						(
+							FxD(SV2DstSizeDiv, Math::FPower2(HUDXSize/2)),
+							FxD(SV2DstSizeDiv, Math::FPower2(HUDYSize/2))
+						),
+						SV2DstFadeMul
+					), 0.0, 1.0
+				)
+			)
+		);
+	}
+	
+	Void Draw_Corona__S_DL
+	(
+		Vec3_T*	Point,
+		Vec2_T*	VFHUD,
+		Vec3_T*	ScaleX, Vec3_T* ScaleY,
+		Vec4_T*	Alpha,
+		Int		ID1,
+		Int		ID2,
+		Fixed	FxHlFOV			= 0.125,//== FOV 90
+		Fixed	SV2DstFadeMul1	= 8.0,
+		Fixed	SV2DstFadeMul2	= 2.0,
+		Fixed	SV2DstSizeDiv	= 256,
+		Fixed 	HoldTime		= 0.04,
+		Fixed	Dst				= 0.0
+	)
+	{
+		Fixed dX = Point.X - GetActorX(0);
+		Fixed dY = Point.Y - GetActorY(0);
+		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
+
+		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
+
+		If(_Tmp::V3_0.X <= 0)		{Return;}
+
+		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+
+		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
+		Fixed HUDYSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
+
+		Fixed HUDX = Math::NoZero(FxM(VFHUD.X, HUDXSize));
+		Fixed HUDY = Math::NoZero(FxM(VFHUD.Y, HUDYSize));
+
+		SetHUDSize(HUDX >> 16, HUDY >> 16, False);
+
+		dX = HUDX/2; dY = HUDY/2;
+
+		HUDX =		FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV))		;
+		HUDY =	FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), 1.6);
+
+		dX = dX - FxM(HUDX, dX);
+		dY = dY - FxM(HUDY, dY);
+
+		dZ = VFHUD.X/2;
+		HUDX = RatioMap(dZ + FxM(HUDX, dZ), VFHUD.X, FxD(VFHUD.X, VFHUD.Y));
+
+		dZ = VFHUD.Y/2;
+		HUDY = dZ - FxM(HUDY, dZ);
+
+		dZ =	Math::Min2(	Math::HalfPoint(FxD(HUDX, VFHUD.X), 1.0),
+							Math::HalfPoint(FxD(HUDY, VFHUD.Y), 1.0)	) +
+				Math::Mean2
+				(
+					FxD(SV2DstSizeDiv, Math::FPower2(HUDXSize/2)),
+					FxD(SV2DstSizeDiv, Math::FPower2(HUDYSize/2))
+				);
+		FxHlFOV = FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W);
+
+		HUDMessage
+		(
+			s:"A"; HUDMsg_Plain | HUDMsg_Layer_UnderHUD | HUDMsg_Addblend | HUDMsg_Alpha,
+			ID1, CR_Untranslated,
+			dX & 0xFFFF0000,
+			dY & 0xFFFF0000,
+			HoldTime,
+			FxM(FxHlFOV, Math::Clamp(FxM(dZ, SV2DstFadeMul1), 0.0, 1.0))
+		);
+		HUDMessage
+		(
+			s:"A"; HUDMsg_Plain | HUDMsg_Layer_UnderHUD | HUDMsg_Addblend | HUDMsg_Alpha,
+			ID2, CR_Untranslated,
+			dX & 0xFFFF0000,
+			dY & 0xFFFF0000,
+			HoldTime,
+			FxM(FxHlFOV, Math::Clamp(FxM(dZ, SV2DstFadeMul2), 0.0, 1.0))/2
+		);
+	}
+	
+	Void Draw_Corona__FIO
+	(
+		Vec3_T*	Point,
+		Vec2_T*	VFHUD,
+		Vec3_T*	ScaleX, Vec3_T* ScaleY,
+		Vec4_T*	Alpha,
+		Int		ID,
+		Fixed	FxHlFOV		= 0.125,//== FOV 90
+		Fixed	FadeInTime	= 0.75,
+		Fixed	FadeOutTime	= 0.75,
+		Fixed 	HoldTime	= 0.04,
+		Fixed	Dst			= 0.0
+	)
+	{
+		Fixed dX = Point.X - GetActorX(0);
+		Fixed dY = Point.Y - GetActorY(0);
+		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
+
+		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
+
+		If(_Tmp::V3_0.X <= 0)		{Return;}
+
+		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+
+		dX = FxM(VFHUD.X, Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z));
+		dY = FxM(VFHUD.Y, Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z));
+
+		SetHUDSize(dX >> 16, dY >> 16, False);
+
+		dX /= 2; dY /= 2;
+
+		dX = dX -		FxM(FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), dX);
+		dY = dY -	FxM(FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), dY), 1.6);
+
+		HUDMessage
+		(
+			s:"A"; HUDMsg_FadeInOut | HUDMsg_Layer_UnderHUD | HUDMsg_Addblend | HUDMsg_Alpha,
+			ID, CR_Untranslated,
+			dX & 0xFFFF0000,
+			dY & 0xFFFF0000,
+			HoldTime, FadeInTime, FadeOutTime,
+			FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W)
+		);
+	}
+	
+	Void Draw_Corona__FIO_S
+	(
+		Vec3_T*	Point,
+		Vec2_T*	VFHUD,
+		Vec3_T*	ScaleX, Vec3_T* ScaleY,
+		Vec4_T*	Alpha,
+		Int		ID,
+		Fixed	FxHlFOV			= 0.125,//== FOV 90
+		Fixed	SV2DstFadeMul	= 8.0,
+		Fixed	SV2DstSizeDiv	= 256,
+		Fixed	FadeInTime		= 0.75,
+		Fixed	FadeOutTime		= 0.75,
+		Fixed 	HoldTime		= 0.04,
+		Fixed	Dst				= 0.0
+	)
+	{
+		Fixed dX = Point.X - GetActorX(0);
+		Fixed dY = Point.Y - GetActorY(0);
+		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
+
+		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
+
+		If(_Tmp::V3_0.X <= 0)		{Return;}
+
+		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+
+		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
+		Fixed HUDYSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
+
+		Fixed HUDX = Math::NoZero(FxM(VFHUD.X, HUDXSize));
+		Fixed HUDY = Math::NoZero(FxM(VFHUD.Y, HUDYSize));
+
+		SetHUDSize(HUDX >> 16, HUDY >> 16, False);
+
+		dX = HUDX/2; dY = HUDY/2;
+
+		HUDX =		FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV))		;
+		HUDY =	FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), 1.6);
+
+		dX = dX - FxM(HUDX, dX);
+		dY = dY - FxM(HUDY, dY);
+
+		dZ = VFHUD.X/2;
+		HUDX = RatioMap(dZ + FxM(HUDX, dZ), VFHUD.X, FxD(VFHUD.X, VFHUD.Y));
+
+		dZ = VFHUD.Y/2;
+		HUDY = dZ - FxM(HUDY, dZ);
+
+		HUDMessage
+		(
+			s:"A"; HUDMsg_FadeInOut | HUDMsg_Layer_UnderHUD | HUDMsg_Addblend | HUDMsg_Alpha,
+			ID, CR_Untranslated,
+			dX & 0xFFFF0000,
+			dY & 0xFFFF0000,
+			HoldTime, FadeInTime, FadeOutTime,
+			FxM
+			(
+				FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W),
+				Math::Clamp
+				(
+					FxM
+					(
+						Math::Min2(	Math::HalfPoint(FxD(HUDX, VFHUD.X), 1.0),
+									Math::HalfPoint(FxD(HUDY, VFHUD.Y), 1.0)	) +
+						Math::Mean2
+						(
+							FxD(SV2DstSizeDiv, Math::FPower2(HUDXSize/2)),
+							FxD(SV2DstSizeDiv, Math::FPower2(HUDYSize/2))
+						),
+						SV2DstFadeMul
+					), 0.0, 1.0
+				)
+			)
+		);
+	}
+	
+	Void Draw_Corona__FIO_S_DL
+	(
+		Vec3_T*	Point,
+		Vec2_T*	VFHUD,
+		Vec3_T*	ScaleX, Vec3_T* ScaleY,
+		Vec4_T*	Alpha,
+		Int		ID1,
+		Int		ID2,
+		Fixed	FxHlFOV			= 0.125,//== FOV 90
+		Fixed	SV2DstFadeMul1	= 8.0,
+		Fixed	SV2DstFadeMul2	= 2.0,
+		Fixed	SV2DstSizeDiv	= 256,
+		Fixed	FadeInTime		= 0.75,
+		Fixed	FadeOutTime		= 0.75,
+		Fixed 	HoldTime		= 0.04,
+		Fixed	Dst				= 0.0
+	)
+	{
+		Fixed dX = Point.X - GetActorX(0);
+		Fixed dY = Point.Y - GetActorY(0);
+		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
+
+		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
+
+		If(_Tmp::V3_0.X <= 0)		{Return;}
+
+		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+
+		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
+		Fixed HUDYSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
+
+		Fixed HUDX = Math::NoZero(FxM(VFHUD.X, HUDXSize));
+		Fixed HUDY = Math::NoZero(FxM(VFHUD.Y, HUDYSize));
+
+		SetHUDSize(HUDX >> 16, HUDY >> 16, False);
+
+		dX = HUDX/2; dY = HUDY/2;
+
+		HUDX =		FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV))		;
+		HUDY =	FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), 1.6);
+
+		dX = dX - FxM(HUDX, dX);
+		dY = dY - FxM(HUDY, dY);
+
+		dZ = VFHUD.X/2;
+		HUDX = RatioMap(dZ + FxM(HUDX, dZ), VFHUD.X, FxD(VFHUD.X, VFHUD.Y));
+
+		dZ = VFHUD.Y/2;
+		HUDY = dZ - FxM(HUDY, dZ);
+
+		dZ =	Math::Min2(	Math::HalfPoint(FxD(HUDX, VFHUD.X), 1.0),
+							Math::HalfPoint(FxD(HUDY, VFHUD.Y), 1.0)	) +
+				Math::Mean2
+				(
+					FxD(SV2DstSizeDiv, Math::FPower2(HUDXSize/2)),
+					FxD(SV2DstSizeDiv, Math::FPower2(HUDYSize/2))
+				);
+		FxHlFOV = FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W);
+
+		HUDMessage
+		(
+			s:"A"; HUDMsg_FadeInOut | HUDMsg_Layer_UnderHUD | HUDMsg_Addblend | HUDMsg_Alpha,
+			ID1, CR_Untranslated,
+			dX & 0xFFFF0000,
+			dY & 0xFFFF0000,
+			HoldTime, FadeInTime, FadeOutTime,
+			FxM(FxHlFOV, Math::Clamp(FxM(dZ, SV2DstFadeMul1), 0.0, 1.0))
+		);
+		HUDMessage
+		(
+			s:"A"; HUDMsg_FadeInOut | HUDMsg_Layer_UnderHUD | HUDMsg_Addblend | HUDMsg_Alpha,
+			ID2, CR_Untranslated,
+			dX & 0xFFFF0000,
+			dY & 0xFFFF0000,
+			HoldTime, FadeInTime, FadeOutTime/2,
+			FxM(FxHlFOV, Math::Clamp(FxM(dZ, SV2DstFadeMul2), 0.0, 1.0))/2
+		);
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	Void Draw_WV3Image__FO
+	(
+		Vec3_T*	Point,
+		Vec2_T*	VFHUD,
+		Vec3_T*	ScaleX, Vec3_T* ScaleY,
+		Vec4_T*	Alpha,
+		Int		ID,
+		Fixed	FxHlFOV		= 0.125,//== FOV 90
+		Flags_	Flags		= 0,
+		Fixed	OffsetX		= 0,
+		Fixed	OffsetY		= 0,
+		Fixed	FadeOutTime	= 0.75,
+		Fixed 	HoldTime	= 0.04,
+		Fixed	Dst			= 0.0
+	)
+	{
+		Fixed dX = Point.X - GetActorX(0);
+		Fixed dY = Point.Y - GetActorY(0);
+		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
+
+		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
+
+		If(_Tmp::V3_0.X <= 0)		{Return;}
+
+		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+
+		dX = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
+		dY = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
+		
+		OffsetX = (FxM(OffsetX, dX) & 0xFFFF0000) | (OffsetX & 0x0000FFFF);
+		OffsetY = (FxM(OffsetY, dY) & 0xFFFF0000) | (OffsetY & 0x0000FFFF);
+
+		dX = Math::NoZero(FxM(VFHUD.X, dX));
+		dY = Math::NoZero(FxM(VFHUD.Y, dY));
+
+		SetHUDSize(dX >> 16, dY >> 16, False);
+
+		dX /= 2; dY /= 2;
+
+		dX = dX -		FxM(FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), dX);
+		dY = dY -	FxM(FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), dY), 1.6);
+		
+		HUDMessage
+		(
+			s:"A"; HUDMsg_FadeOut | (Flags & _WV3Proj__FlagFmt),
+			ID, CR_Untranslated,
+			(dX & 0xFFFF0000) + OffsetX,
+			(dY & 0xFFFF0000) + OffsetY,
+			HoldTime, FadeOutTime,
+			FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W)
+		);
+	}
+	
+	Void Draw_WV3Image__FO_S
+	(
+		Vec3_T*	Point,
+		Vec2_T*	VFHUD,
+		Vec3_T*	ScaleX, Vec3_T* ScaleY,
+		Vec4_T*	Alpha,
+		Int		ID,
+		Fixed	FxHlFOV			= 0.125,//== FOV 90
+		Flags_	Flags			= 0,
+		Fixed	OffsetX			= 0,
+		Fixed	OffsetY			= 0,
+		Fixed	SV2DstFadeMul	= 8.0,
+		Fixed	SV2DstSizeDiv	= 256,
+		Fixed	FadeOutTime		= 0.75,
+		Fixed 	HoldTime		= 0.04,
+		Fixed	Dst				= 0.0
+	)
+	{
+		Fixed dX = Point.X - GetActorX(0);
+		Fixed dY = Point.Y - GetActorY(0);
+		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
+
+		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
+
+		If(_Tmp::V3_0.X <= 0)		{Return;}
+
+		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+
+		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
+		Fixed HUDYSize = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
+
+		Fixed HUDX = Math::NoZero(FxM(VFHUD.X, HUDXSize));
+		Fixed HUDY = Math::NoZero(FxM(VFHUD.Y, HUDYSize));
+		
+		OffsetX = (FxM(OffsetX, HUDXSize) & 0xFFFF0000) | (OffsetX & 0x0000FFFF);
+		OffsetY = (FxM(OffsetY, HUDYSize) & 0xFFFF0000) | (OffsetY & 0x0000FFFF);
+
+		SetHUDSize(HUDX >> 16, HUDY >> 16, False);
+
+		dX = HUDX/2; dY = HUDY/2;
+
+		HUDX =		FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV))		;
+		HUDY =	FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), 1.6);
+
+		dX = dX - FxM(HUDX, dX);
+		dY = dY - FxM(HUDY, dY);
+
+		dZ = VFHUD.X/2;
+		HUDX = RatioMap(dZ + FxM(HUDX, dZ), VFHUD.X, FxD(VFHUD.X, VFHUD.Y));
+
+		dZ = VFHUD.Y/2;
+		HUDY = dZ - FxM(HUDY, dZ);
+
+		HUDMessage
+		(
+			s:"A"; HUDMsg_FadeOut | (Flags & _WV3Proj__FlagFmt),
+			ID, CR_Untranslated,
+			(dX & 0xFFFF0000) + OffsetX,
+			(dY & 0xFFFF0000) + OffsetY,
+			HoldTime, FadeOutTime,
+			FxM
+			(
+				FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W),
+				Math::Clamp
+				(
+					FxM
+					(
+						Math::Min2(	Math::HalfPoint(FxD(HUDX, VFHUD.X), 1.0),
+									Math::HalfPoint(FxD(HUDY, VFHUD.Y), 1.0)	) +
+						Math::Mean2
+						(
+							FxD(SV2DstSizeDiv, Math::FPower2(HUDXSize/2)),
+							FxD(SV2DstSizeDiv, Math::FPower2(HUDYSize/2))
+						),
+						SV2DstFadeMul
+					), 0.0, 1.0
+				)
+			)
+		);
+	}
+	
+	Void Draw_WV3Image__FO_S_DL
+	(
+		Vec3_T*	Point,
+		Vec2_T*	VFHUD,
+		Vec3_T*	ScaleX, Vec3_T* ScaleY,
+		Vec4_T*	Alpha,
+		Int		ID1,
+		Int		ID2,
+		Fixed	FxHlFOV			= 0.125,//== FOV 90
+		Flags_	Flags			= 0,
+		Fixed	OffsetX			= 0,
+		Fixed	OffsetY			= 0,
+		Fixed	SV2DstFadeMul1	= 8.0,
+		Fixed	SV2DstFadeMul2	= 2.0,
+		Fixed	SV2DstSizeDiv	= 256,
+		Fixed	FadeOutTime		= 0.75,
+		Fixed 	HoldTime		= 0.04,
+		Fixed	Dst				= 0.0
+	)
+	{
+		Fixed dX = Point.X - GetActorX(0);
+		Fixed dY = Point.Y - GetActorY(0);
+		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
+
+		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
+
+		If(_Tmp::V3_0.X <= 0)		{Return;}
+
+		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+
+		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
+		Fixed HUDYSize = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
+
+		Fixed HUDX = Math::NoZero(FxM(VFHUD.X, HUDXSize));
+		Fixed HUDY = Math::NoZero(FxM(VFHUD.Y, HUDYSize));
+		
+		OffsetX = (FxM(OffsetX, HUDXSize) & 0xFFFF0000) | (OffsetX & 0x0000FFFF);
+		OffsetY = (FxM(OffsetY, HUDYSize) & 0xFFFF0000) | (OffsetY & 0x0000FFFF);
+
+		SetHUDSize(HUDX >> 16, HUDY >> 16, False);
+
+		dX = HUDX/2; dY = HUDY/2;
+
+		HUDX =		FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV))		;
+		HUDY =	FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), 1.6);
+
+		dX = dX - FxM(HUDX, dX);
+		dY = dY - FxM(HUDY, dY);
+
+		dZ = VFHUD.X/2;
+		HUDX = RatioMap(dZ + FxM(HUDX, dZ), VFHUD.X, FxD(VFHUD.X, VFHUD.Y));
+
+		dZ = VFHUD.Y/2;
+		HUDY = dZ - FxM(HUDY, dZ);
+
+		dZ =	Math::Min2(	Math::HalfPoint(FxD(HUDX, VFHUD.X), 1.0),
+							Math::HalfPoint(FxD(HUDY, VFHUD.Y), 1.0)	) +
+				Math::Mean2
+				(
+					FxD(SV2DstSizeDiv, Math::FPower2(HUDXSize/2)),
+					FxD(SV2DstSizeDiv, Math::FPower2(HUDYSize/2))
+				);
+		FxHlFOV = FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W);
+
+		HUDMessage
+		(
+			s:"A"; HUDMsg_FadeOut | (Flags & _WV3Proj__FlagFmt),
+			ID1, CR_Untranslated,
+			(dX & 0xFFFF0000) + OffsetX,
+			(dY & 0xFFFF0000) + OffsetY,
+			HoldTime, FadeOutTime,
+			FxM(FxHlFOV, Math::Clamp(FxM(dZ, SV2DstFadeMul1), 0.0, 1.0))
+		);
+		HUDMessage
+		(
+			s:"A"; HUDMsg_FadeOut | (Flags & _WV3Proj__FlagFmt),
+			ID2, CR_Untranslated,
+			(dX & 0xFFFF0000) + OffsetX,
+			(dY & 0xFFFF0000) + OffsetY,
+			HoldTime, FadeOutTime/2,
+			FxM(FxHlFOV, Math::Clamp(FxM(dZ, SV2DstFadeMul2), 0.0, 1.0))/2
+		);
+	}
+	
+	Void Draw_WV3Image
+	(
+		Vec3_T*	Point,
+		Vec2_T*	VFHUD,
+		Vec3_T*	ScaleX, Vec3_T* ScaleY,
+		Vec4_T*	Alpha,
+		Int		ID,
+		Fixed	FxHlFOV		= 0.125,//== FOV 90
+		Flags_	Flags		= 0,
+		Fixed	OffsetX		= 0,
+		Fixed	OffsetY		= 0,
+		Fixed	FadeOutTime	= 0.75,
+		Fixed 	HoldTime	= 0.04,
+		Fixed	Dst			= 0.0
+	)
+	{
+		Fixed dX = Point.X - GetActorX(0);
+		Fixed dY = Point.Y - GetActorY(0);
+		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
+
+		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
+
+		If(_Tmp::V3_0.X <= 0)		{Return;}
+
+		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+
+		dX = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
+		dY = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
+		
+		OffsetX = (FxM(OffsetX, dX) & 0xFFFF0000) | (OffsetX & 0x0000FFFF);
+		OffsetY = (FxM(OffsetY, dY) & 0xFFFF0000) | (OffsetY & 0x0000FFFF);
+
+		dX = Math::NoZero(FxM(VFHUD.X, dX));
+		dY = Math::NoZero(FxM(VFHUD.Y, dY));
+
+		SetHUDSize(dX >> 16, dY >> 16, False);
+
+		dX /= 2; dY /= 2;
+
+		dX = dX -		FxM(FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), dX);
+		dY = dY -	FxM(FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), dY), 1.6);
+
+		HUDMessage
+		(
+			s:"A"; HUDMsg_Plain | (Flags & _WV3Proj__FlagFmt),
+			ID, CR_Untranslated,
+			(dX & 0xFFFF0000) + OffsetX,
+			(dY & 0xFFFF0000) + OffsetY,
+			HoldTime,
+			FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W)
+		);
+	}
+	
+	Void Draw_WV3Image__S
+	(
+		Vec3_T*	Point,
+		Vec2_T*	VFHUD,
+		Vec3_T*	ScaleX, Vec3_T* ScaleY,
+		Vec4_T*	Alpha,
+		Int		ID,
+		Fixed	FxHlFOV			= 0.125,//== FOV 90
+		Flags_	Flags			= 0,
+		Fixed	OffsetX			= 0,
+		Fixed	OffsetY			= 0,
+		Fixed	SV2DstFadeMul	= 8.0,
+		Fixed	SV2DstSizeDiv	= 256,
+		Fixed 	HoldTime		= 0.04,
+		Fixed	Dst				= 0.0
+	)
+	{
+		Fixed dX = Point.X - GetActorX(0);
+		Fixed dY = Point.Y - GetActorY(0);
+		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
+
+		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
+
+		If(_Tmp::V3_0.X <= 0)		{Return;}
+
+		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+
+		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
+		Fixed HUDYSize = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
+
+		Fixed HUDX = Math::NoZero(FxM(VFHUD.X, HUDXSize));
+		Fixed HUDY = Math::NoZero(FxM(VFHUD.Y, HUDYSize));
+		
+		OffsetX = (FxM(OffsetX, HUDXSize) & 0xFFFF0000) | (OffsetX & 0x0000FFFF);
+		OffsetY = (FxM(OffsetY, HUDYSize) & 0xFFFF0000) | (OffsetY & 0x0000FFFF);
+
+		SetHUDSize(HUDX >> 16, HUDY >> 16, False);
+
+		dX = HUDX/2; dY = HUDY/2;
+
+		HUDX =		FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV))		;
+		HUDY =	FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), 1.6);
+
+		dX = dX - FxM(HUDX, dX);
+		dY = dY - FxM(HUDY, dY);
+
+		dZ = VFHUD.X/2;
+		HUDX = RatioMap(dZ + FxM(HUDX, dZ), VFHUD.X, FxD(VFHUD.X, VFHUD.Y));
+
+		dZ = VFHUD.Y/2;
+		HUDY = dZ - FxM(HUDY, dZ);
+
+		HUDMessage
+		(
+			s:"A"; HUDMsg_Plain | (Flags & _WV3Proj__FlagFmt),
+			ID, CR_Untranslated,
+			(dX & 0xFFFF0000) + OffsetX,
+			(dY & 0xFFFF0000) + OffsetY,
+			HoldTime,
+			FxM
+			(
+				FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W),
+				Math::Clamp
+				(
+					FxM
+					(
+						Math::Min2(	Math::HalfPoint(FxD(HUDX, VFHUD.X), 1.0),
+									Math::HalfPoint(FxD(HUDY, VFHUD.Y), 1.0)	) +
+						Math::Mean2
+						(
+							FxD(SV2DstSizeDiv, Math::FPower2(HUDXSize/2)),
+							FxD(SV2DstSizeDiv, Math::FPower2(HUDYSize/2))
+						),
+						SV2DstFadeMul
+					), 0.0, 1.0
+				)
+			)
+		);
+	}
+	
+	Void Draw_WV3Image__S_DL
+	(
+		Vec3_T*	Point,
+		Vec2_T*	VFHUD,
+		Vec3_T*	ScaleX, Vec3_T* ScaleY,
+		Vec4_T*	Alpha,
+		Int		ID1,
+		Int		ID2,
+		Fixed	FxHlFOV			= 0.125,//== FOV 90
+		Flags_	Flags			= 0,
+		Fixed	OffsetX			= 0,
+		Fixed	OffsetY			= 0,
+		Fixed	SV2DstFadeMul1	= 8.0,
+		Fixed	SV2DstFadeMul2	= 2.0,
+		Fixed	SV2DstSizeDiv	= 256,
+		Fixed 	HoldTime		= 0.04,
+		Fixed	Dst				= 0.0
+	)
+	{
+		Fixed dX = Point.X - GetActorX(0);
+		Fixed dY = Point.Y - GetActorY(0);
+		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
+
+		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
+
+		If(_Tmp::V3_0.X <= 0)		{Return;}
+
+		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+
+		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
+		Fixed HUDYSize = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
+
+		Fixed HUDX = Math::NoZero(FxM(VFHUD.X, HUDXSize));
+		Fixed HUDY = Math::NoZero(FxM(VFHUD.Y, HUDYSize));
+		
+		OffsetX = (FxM(OffsetX, HUDXSize) & 0xFFFF0000) | (OffsetX & 0x0000FFFF);
+		OffsetY = (FxM(OffsetY, HUDYSize) & 0xFFFF0000) | (OffsetY & 0x0000FFFF);
+
+		SetHUDSize(HUDX >> 16, HUDY >> 16, False);
+
+		dX = HUDX/2; dY = HUDY/2;
+
+		HUDX =		FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV))		;
+		HUDY =	FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), 1.6);
+
+		dX = dX - FxM(HUDX, dX);
+		dY = dY - FxM(HUDY, dY);
+
+		dZ = VFHUD.X/2;
+		HUDX = RatioMap(dZ + FxM(HUDX, dZ), VFHUD.X, FxD(VFHUD.X, VFHUD.Y));
+
+		dZ = VFHUD.Y/2;
+		HUDY = dZ - FxM(HUDY, dZ);
+
+		dZ =	Math::Min2(	Math::HalfPoint(FxD(HUDX, VFHUD.X), 1.0),
+							Math::HalfPoint(FxD(HUDY, VFHUD.Y), 1.0)	) +
+				Math::Mean2
+				(
+					FxD(SV2DstSizeDiv, Math::FPower2(HUDXSize/2)),
+					FxD(SV2DstSizeDiv, Math::FPower2(HUDYSize/2))
+				);
+		FxHlFOV = FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W);
+
+		HUDMessage
+		(
+			s:"A"; HUDMsg_Plain | (Flags & _WV3Proj__FlagFmt),
+			ID1, CR_Untranslated,
+			(dX & 0xFFFF0000) + OffsetX,
+			(dY & 0xFFFF0000) + OffsetY,
+			HoldTime,
+			FxM(FxHlFOV, Math::Clamp(FxM(dZ, SV2DstFadeMul1), 0.0, 1.0))
+		);
+		HUDMessage
+		(
+			s:"A"; HUDMsg_Plain | (Flags & _WV3Proj__FlagFmt),
+			ID2, CR_Untranslated,
+			(dX & 0xFFFF0000) + OffsetX,
+			(dY & 0xFFFF0000) + OffsetY,
+			HoldTime,
+			FxM(FxHlFOV, Math::Clamp(FxM(dZ, SV2DstFadeMul2), 0.0, 1.0))/2
+		);
+	}
+	
+	Void Draw_WV3Image__FIO
+	(
+		Vec3_T*	Point,
+		Vec2_T*	VFHUD,
+		Vec3_T*	ScaleX, Vec3_T* ScaleY,
+		Vec4_T*	Alpha,
+		Int		ID,
+		Fixed	FxHlFOV		= 0.125,//== FOV 90
+		Flags_	Flags		= 0,
+		Fixed	OffsetX		= 0,
+		Fixed	OffsetY		= 0,
+		Fixed	FadeInTime	= 0.75,
+		Fixed	FadeOutTime	= 0.75,
+		Fixed 	HoldTime	= 0.04,
+		Fixed	Dst			= 0.0
+	)
+	{
+		Fixed dX = Point.X - GetActorX(0);
+		Fixed dY = Point.Y - GetActorY(0);
+		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
+
+		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
+
+		If(_Tmp::V3_0.X <= 0)		{Return;}
+
+		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+
+		dX = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
+		dY = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
+		
+		OffsetX = (FxM(OffsetX, dX) & 0xFFFF0000) | (OffsetX & 0x0000FFFF);
+		OffsetY = (FxM(OffsetY, dY) & 0xFFFF0000) | (OffsetY & 0x0000FFFF);
+
+		dX = Math::NoZero(FxM(VFHUD.X, dX));
+		dY = Math::NoZero(FxM(VFHUD.Y, dY));
+
+		SetHUDSize(dX >> 16, dY >> 16, False);
+
+		dX /= 2; dY /= 2;
+
+		dX = dX -		FxM(FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), dX);
+		dY = dY -	FxM(FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), dY), 1.6);
+
+		HUDMessage
+		(
+			s:"A"; HUDMsg_FadeInOut | (Flags & _WV3Proj__FlagFmt),
+			ID, CR_Untranslated,
+			(dX & 0xFFFF0000) + OffsetX,
+			(dY & 0xFFFF0000) + OffsetY,
+			HoldTime, FadeInTime, FadeOutTime,
+			FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W)
+		);
+	}
+	
+	Void Draw_WV3Image__FIO_S
+	(
+		Vec3_T*	Point,
+		Vec2_T*	VFHUD,
+		Vec3_T*	ScaleX, Vec3_T* ScaleY,
+		Vec4_T*	Alpha,
+		Int		ID,
+		Fixed	FxHlFOV			= 0.125,//== FOV 90
+		Flags_	Flags			= 0,
+		Fixed	OffsetX			= 0,
+		Fixed	OffsetY			= 0,
+		Fixed	SV2DstFadeMul	= 8.0,
+		Fixed	SV2DstSizeDiv	= 256,
+		Fixed	FadeInTime		= 0.75,
+		Fixed	FadeOutTime		= 0.75,
+		Fixed 	HoldTime		= 0.04,
+		Fixed	Dst				= 0.0
+	)
+	{
+		Fixed dX = Point.X - GetActorX(0);
+		Fixed dY = Point.Y - GetActorY(0);
+		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
+
+		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
+
+		If(_Tmp::V3_0.X <= 0)		{Return;}
+
+		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+
+		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
+		Fixed HUDYSize = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
+
+		Fixed HUDX = Math::NoZero(FxM(VFHUD.X, HUDXSize));
+		Fixed HUDY = Math::NoZero(FxM(VFHUD.Y, HUDYSize));
+		
+		OffsetX = (FxM(OffsetX, HUDXSize) & 0xFFFF0000) | (OffsetX & 0x0000FFFF);
+		OffsetY = (FxM(OffsetY, HUDYSize) & 0xFFFF0000) | (OffsetY & 0x0000FFFF);
+
+		SetHUDSize(HUDX >> 16, HUDY >> 16, False);
+
+		dX = HUDX/2; dY = HUDY/2;
+
+		HUDX =		FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV))		;
+		HUDY =	FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), 1.6);
+
+		dX = dX - FxM(HUDX, dX);
+		dY = dY - FxM(HUDY, dY);
+
+		dZ = VFHUD.X/2;
+		HUDX = RatioMap(dZ + FxM(HUDX, dZ), VFHUD.X, FxD(VFHUD.X, VFHUD.Y));
+
+		dZ = VFHUD.Y/2;
+		HUDY = dZ - FxM(HUDY, dZ);
+
+		HUDMessage
+		(
+			s:"A"; HUDMsg_FadeInOut | (Flags & _WV3Proj__FlagFmt),
+			ID, CR_Untranslated,
+			(dX & 0xFFFF0000) + OffsetX,
+			(dY & 0xFFFF0000) + OffsetY,
+			HoldTime, FadeInTime, FadeOutTime,
+			FxM
+			(
+				FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W),
+				Math::Clamp
+				(
+					FxM
+					(
+						Math::Min2(	Math::HalfPoint(FxD(HUDX, VFHUD.X), 1.0),
+									Math::HalfPoint(FxD(HUDY, VFHUD.Y), 1.0)	) +
+						Math::Mean2
+						(
+							FxD(SV2DstSizeDiv, Math::FPower2(HUDXSize/2)),
+							FxD(SV2DstSizeDiv, Math::FPower2(HUDYSize/2))
+						),
+						SV2DstFadeMul
+					), 0.0, 1.0
+				)
+			)
+		);
+	}
+	
+	Void Draw_WV3Image__FIO_S_DL
+	(
+		Vec3_T*	Point,
+		Vec2_T*	VFHUD,
+		Vec3_T*	ScaleX, Vec3_T* ScaleY,
+		Vec4_T*	Alpha,
+		Int		ID1,
+		Int		ID2,
+		Fixed	FxHlFOV			= 0.125,//== FOV 90
+		Flags_	Flags			= 0,
+		Fixed	OffsetX			= 0,
+		Fixed	OffsetY			= 0,
+		Fixed	SV2DstFadeMul1	= 8.0,
+		Fixed	SV2DstFadeMul2	= 2.0,
+		Fixed	SV2DstSizeDiv	= 256,
+		Fixed	FadeInTime		= 0.75,
+		Fixed	FadeOutTime		= 0.75,
+		Fixed 	HoldTime		= 0.04,
+		Fixed	Dst				= 0.0
+	)
+	{
+		Fixed dX = Point.X - GetActorX(0);
+		Fixed dY = Point.Y - GetActorY(0);
+		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
+
+		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
+
+		If(_Tmp::V3_0.X <= 0)		{Return;}
+
+		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+
+		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
+		Fixed HUDYSize = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
+
+		Fixed HUDX = Math::NoZero(FxM(VFHUD.X, HUDXSize));
+		Fixed HUDY = Math::NoZero(FxM(VFHUD.Y, HUDYSize));
+
+		SetHUDSize(HUDX >> 16, HUDY >> 16, False);
+
+		dX = HUDX/2; dY = HUDY/2;
+
+		HUDX =		FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV))		;
+		HUDY =	FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), 1.6);
+
+		dX = dX - FxM(HUDX, dX);
+		dY = dY - FxM(HUDY, dY);
+
+		dZ = VFHUD.X/2;
+		HUDX = RatioMap(dZ + FxM(HUDX, dZ), VFHUD.X, FxD(VFHUD.X, VFHUD.Y));
+
+		dZ = VFHUD.Y/2;
+		HUDY = dZ - FxM(HUDY, dZ);
+
+		dZ =	Math::Min2(	Math::HalfPoint(FxD(HUDX, VFHUD.X), 1.0),
+							Math::HalfPoint(FxD(HUDY, VFHUD.Y), 1.0)	) +
+				Math::Mean2
+				(
+					FxD(SV2DstSizeDiv, Math::FPower2(HUDXSize/2)),
+					FxD(SV2DstSizeDiv, Math::FPower2(HUDYSize/2))
+				);
+		FxHlFOV = FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W);
+
+		HUDMessage
+		(
+			s:"A"; HUDMsg_FadeInOut | (Flags & _WV3Proj__FlagFmt),
+			ID1, CR_Untranslated,
+			(dX & 0xFFFF0000) + OffsetX,
+			(dY & 0xFFFF0000) + OffsetY,
+			HoldTime, FadeInTime, FadeOutTime,
+			FxM(FxHlFOV, Math::Clamp(FxM(dZ, SV2DstFadeMul1), 0.0, 1.0))
+		);
+		HUDMessage
+		(
+			s:"A"; HUDMsg_FadeInOut | (Flags & _WV3Proj__FlagFmt),
+			ID2, CR_Untranslated,
+			(dX & 0xFFFF0000) + OffsetX,
+			(dY & 0xFFFF0000) + OffsetY,
+			HoldTime, FadeInTime, FadeOutTime/2,
+			FxM(FxHlFOV, Math::Clamp(FxM(dZ, SV2DstFadeMul2), 0.0, 1.0))/2
+		);
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	Void Draw_WV3Text__FO
+	(
+		Str		Text,
+		Vec3_T*	Point,
+		Vec2_T*	VFHUD,
+		Vec3_T*	ScaleX, Vec3_T* ScaleY,
+		Vec4_T*	Alpha,
+		Int		ID,
+		Fixed	FxHlFOV		= 0.125,//== FOV 90
+		Flags_	Flags		= 0,
+		Fixed	OffsetX		= 0,
+		Fixed	OffsetY		= 0,
+		Fixed	FadeOutTime	= 0.75,
+		Fixed 	HoldTime	= 0.04,
+		Fixed	Dst			= 0.0
+	)
+	{
+		Fixed dX = Point.X - GetActorX(0);
+		Fixed dY = Point.Y - GetActorY(0);
+		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
+
+		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
+
+		If(_Tmp::V3_0.X <= 0)		{Return;}
+
+		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+
+		dX = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
+		dY = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
+		
+		OffsetX = (FxM(OffsetX, dX) & 0xFFFF0000) | (OffsetX & 0x0000FFFF);
+		OffsetY = (FxM(OffsetY, dY) & 0xFFFF0000) | (OffsetY & 0x0000FFFF);
+
+		dX = Math::NoZero(FxM(VFHUD.X, dX));
+		dY = Math::NoZero(FxM(VFHUD.Y, dY));
+
+		SetHUDSize(dX >> 16, dY >> 16, False);
+
+		dX /= 2; dY /= 2;
+
+		dX = dX -		FxM(FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), dX);
+		dY = dY -	FxM(FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), dY), 1.6);
+		
+		HUDMessage
+		(
+			s:Text; HUDMsg_FadeOut | (Flags & _WV3Proj__FlagFmt),
+			ID, CR_Untranslated,
+			(dX & 0xFFFF0000) + OffsetX,
+			(dY & 0xFFFF0000) + OffsetY,
+			HoldTime, FadeOutTime,
+			FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W)
+		);
+	}
+	
+	Void Draw_WV3Text__FO_S
+	(
+		Str		Text,
+		Vec3_T*	Point,
+		Vec2_T*	VFHUD,
+		Vec3_T*	ScaleX, Vec3_T* ScaleY,
+		Vec4_T*	Alpha,
+		Int		ID,
+		Fixed	FxHlFOV			= 0.125,//== FOV 90
+		Flags_	Flags			= 0,
+		Fixed	OffsetX			= 0,
+		Fixed	OffsetY			= 0,
+		Fixed	SV2DstFadeMul	= 8.0,
+		Fixed	SV2DstSizeDiv	= 256,
+		Fixed	FadeOutTime		= 0.75,
+		Fixed 	HoldTime		= 0.04,
+		Fixed	Dst				= 0.0
+	)
+	{
+		Fixed dX = Point.X - GetActorX(0);
+		Fixed dY = Point.Y - GetActorY(0);
+		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
+
+		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
+
+		If(_Tmp::V3_0.X <= 0)		{Return;}
+
+		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+
+		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
+		Fixed HUDYSize = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
+
+		Fixed HUDX = Math::NoZero(FxM(VFHUD.X, HUDXSize));
+		Fixed HUDY = Math::NoZero(FxM(VFHUD.Y, HUDYSize));
+		
+		OffsetX = (FxM(OffsetX, HUDXSize) & 0xFFFF0000) | (OffsetX & 0x0000FFFF);
+		OffsetY = (FxM(OffsetY, HUDYSize) & 0xFFFF0000) | (OffsetY & 0x0000FFFF);
+
+		SetHUDSize(HUDX >> 16, HUDY >> 16, False);
+
+		dX = HUDX/2; dY = HUDY/2;
+
+		HUDX =		FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV))		;
+		HUDY =	FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), 1.6);
+
+		dX = dX - FxM(HUDX, dX);
+		dY = dY - FxM(HUDY, dY);
+
+		dZ = VFHUD.X/2;
+		HUDX = RatioMap(dZ + FxM(HUDX, dZ), VFHUD.X, FxD(VFHUD.X, VFHUD.Y));
+
+		dZ = VFHUD.Y/2;
+		HUDY = dZ - FxM(HUDY, dZ);
+		
+		HUDMessage
+		(
+			s:Text; HUDMsg_FadeOut | (Flags & _WV3Proj__FlagFmt),
+			ID, CR_Untranslated,
+			(dX & 0xFFFF0000) + OffsetX,
+			(dY & 0xFFFF0000) + OffsetY,
+			HoldTime, FadeOutTime,
+			FxM
+			(
+				FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W),
+				Math::Clamp
+				(
+					FxM
+					(
+						Math::Min2(	Math::HalfPoint(FxD(HUDX, VFHUD.X), 1.0),
+									Math::HalfPoint(FxD(HUDY, VFHUD.Y), 1.0)	) +
+						Math::Mean2
+						(
+							FxD(SV2DstSizeDiv, Math::FPower2(HUDXSize/2)),
+							FxD(SV2DstSizeDiv, Math::FPower2(HUDYSize/2))
+						),
+						SV2DstFadeMul
+					), 0.0, 1.0
+				)
+			)
+		);
+	}
+	
+	Void Draw_WV3Text__FO_S_DL
+	(
+		Str		Text,
+		Vec3_T*	Point,
+		Vec2_T*	VFHUD,
+		Vec3_T*	ScaleX, Vec3_T* ScaleY,
+		Vec4_T*	Alpha,
+		Int		ID1,
+		Int		ID2,
+		Fixed	FxHlFOV			= 0.125,//== FOV 90
+		Flags_	Flags			= 0,
+		Fixed	OffsetX			= 0,
+		Fixed	OffsetY			= 0,
+		Fixed	SV2DstFadeMul1	= 8.0,
+		Fixed	SV2DstFadeMul2	= 2.0,
+		Fixed	SV2DstSizeDiv	= 256,
+		Fixed	FadeOutTime		= 0.75,
+		Fixed 	HoldTime		= 0.04,
+		Fixed	Dst				= 0.0
+	)
+	{
+		Fixed dX = Point.X - GetActorX(0);
+		Fixed dY = Point.Y - GetActorY(0);
+		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
+
+		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
+
+		If(_Tmp::V3_0.X <= 0)		{Return;}
+
+		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+
+		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
+		Fixed HUDYSize = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
+
+		Fixed HUDX = Math::NoZero(FxM(VFHUD.X, HUDXSize));
+		Fixed HUDY = Math::NoZero(FxM(VFHUD.Y, HUDYSize));
+		
+		OffsetX = (FxM(OffsetX, HUDXSize) & 0xFFFF0000) | (OffsetX & 0x0000FFFF);
+		OffsetY = (FxM(OffsetY, HUDYSize) & 0xFFFF0000) | (OffsetY & 0x0000FFFF);
+
+		SetHUDSize(HUDX >> 16, HUDY >> 16, False);
+
+		dX = HUDX/2; dY = HUDY/2;
+
+		HUDX =		FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV))		;
+		HUDY =	FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), 1.6);
+
+		dX = dX - FxM(HUDX, dX);
+		dY = dY - FxM(HUDY, dY);
+
+		dZ = VFHUD.X/2;
+		HUDX = RatioMap(dZ + FxM(HUDX, dZ), VFHUD.X, FxD(VFHUD.X, VFHUD.Y));
+
+		dZ = VFHUD.Y/2;
+		HUDY = dZ - FxM(HUDY, dZ);
+
+		dZ =	Math::Min2(	Math::HalfPoint(FxD(HUDX, VFHUD.X), 1.0),
+							Math::HalfPoint(FxD(HUDY, VFHUD.Y), 1.0)	) +
+				Math::Mean2
+				(
+					FxD(SV2DstSizeDiv, Math::FPower2(HUDXSize/2)),
+					FxD(SV2DstSizeDiv, Math::FPower2(HUDYSize/2))
+				);
+		FxHlFOV = FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W);
+		
+		HUDMessage
+		(
+			s:Text; HUDMsg_FadeOut | (Flags & _WV3Proj__FlagFmt),
+			ID1, CR_Untranslated,
+			(dX & 0xFFFF0000) + OffsetX,
+			(dY & 0xFFFF0000) + OffsetY,
+			HoldTime, FadeOutTime,
+			FxM(FxHlFOV, Math::Clamp(FxM(dZ, SV2DstFadeMul1), 0.0, 1.0))
+		);
+		HUDMessage
+		(
+			s:Text; HUDMsg_FadeOut | (Flags & _WV3Proj__FlagFmt),
+			ID2, CR_Untranslated,
+			(dX & 0xFFFF0000) + OffsetX,
+			(dY & 0xFFFF0000) + OffsetY,
+			HoldTime, FadeOutTime/2,
+			FxM(FxHlFOV, Math::Clamp(FxM(dZ, SV2DstFadeMul2), 0.0, 1.0))/2
+		);
+	}
+	
+	Void Draw_WV3Text
+	(
+		Str		Text,
+		Vec3_T*	Point,
+		Vec2_T*	VFHUD,
+		Vec3_T*	ScaleX, Vec3_T* ScaleY,
+		Vec4_T*	Alpha,
+		Int		ID,
+		Fixed	FxHlFOV		= 0.125,//== FOV 90
+		Flags_	Flags		= 0,
+		Fixed	OffsetX		= 0,
+		Fixed	OffsetY		= 0,
+		Fixed	FadeOutTime	= 0.75,
+		Fixed 	HoldTime	= 0.04,
+		Fixed	Dst			= 0.0
+	)
+	{
+		Fixed dX = Point.X - GetActorX(0);
+		Fixed dY = Point.Y - GetActorY(0);
+		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
+
+		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
+
+		If(_Tmp::V3_0.X <= 0)		{Return;}
+
+		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+
+		dX = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
+		dY = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
+		
+		OffsetX = (FxM(OffsetX, dX) & 0xFFFF0000) | (OffsetX & 0x0000FFFF);
+		OffsetY = (FxM(OffsetY, dY) & 0xFFFF0000) | (OffsetY & 0x0000FFFF);
+
+		dX = Math::NoZero(FxM(VFHUD.X, dX));
+		dY = Math::NoZero(FxM(VFHUD.Y, dY));
+
+		SetHUDSize(dX >> 16, dY >> 16, False);
+
+		dX /= 2; dY /= 2;
+
+		dX = dX -		FxM(FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), dX);
+		dY = dY -	FxM(FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), dY), 1.6);
+
+		HUDMessage
+		(
+			s:Text; HUDMsg_Plain | (Flags & _WV3Proj__FlagFmt),
+			ID, CR_Untranslated,
+			(dX & 0xFFFF0000) + OffsetX,
+			(dY & 0xFFFF0000) + OffsetY,
+			HoldTime,
+			FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W)
+		);
+	}
+	
+	Void Draw_WV3Text__S
+	(
+		Str		Text,
+		Vec3_T*	Point,
+		Vec2_T*	VFHUD,
+		Vec3_T*	ScaleX, Vec3_T* ScaleY,
+		Vec4_T*	Alpha,
+		Int		ID,
+		Fixed	FxHlFOV			= 0.125,//== FOV 90
+		Flags_	Flags			= 0,
+		Fixed	OffsetX			= 0,
+		Fixed	OffsetY			= 0,
+		Fixed	SV2DstFadeMul	= 8.0,
+		Fixed	SV2DstSizeDiv	= 256,
+		Fixed 	HoldTime		= 0.04,
+		Fixed	Dst				= 0.0
+	)
+	{
+		Fixed dX = Point.X - GetActorX(0);
+		Fixed dY = Point.Y - GetActorY(0);
+		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
+
+		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
+
+		If(_Tmp::V3_0.X <= 0)		{Return;}
+
+		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+
+		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
+		Fixed HUDYSize = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
+
+		Fixed HUDX = Math::NoZero(FxM(VFHUD.X, HUDXSize));
+		Fixed HUDY = Math::NoZero(FxM(VFHUD.Y, HUDYSize));
+		
+		OffsetX = (FxM(OffsetX, HUDXSize) & 0xFFFF0000) | (OffsetX & 0x0000FFFF);
+		OffsetY = (FxM(OffsetY, HUDYSize) & 0xFFFF0000) | (OffsetY & 0x0000FFFF);
+
+		SetHUDSize(HUDX >> 16, HUDY >> 16, False);
+
+		dX = HUDX/2; dY = HUDY/2;
+
+		HUDX =		FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV))		;
+		HUDY =	FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), 1.6);
+
+		dX = dX - FxM(HUDX, dX);
+		dY = dY - FxM(HUDY, dY);
+
+		dZ = VFHUD.X/2;
+		HUDX = RatioMap(dZ + FxM(HUDX, dZ), VFHUD.X, FxD(VFHUD.X, VFHUD.Y));
+
+		dZ = VFHUD.Y/2;
+		HUDY = dZ - FxM(HUDY, dZ);
+		
+		HUDMessage
+		(
+			s:Text; HUDMsg_Plain | (Flags & _WV3Proj__FlagFmt),
+			ID, CR_Untranslated,
+			(dX & 0xFFFF0000) + OffsetX,
+			(dY & 0xFFFF0000) + OffsetY,
+			HoldTime,
+			FxM
+			(
+				FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W),
+				Math::Clamp
+				(
+					FxM
+					(
+						Math::Min2(	Math::HalfPoint(FxD(HUDX, VFHUD.X), 1.0),
+									Math::HalfPoint(FxD(HUDY, VFHUD.Y), 1.0)	) +
+						Math::Mean2
+						(
+							FxD(SV2DstSizeDiv, Math::FPower2(HUDXSize/2)),
+							FxD(SV2DstSizeDiv, Math::FPower2(HUDYSize/2))
+						),
+						SV2DstFadeMul
+					), 0.0, 1.0
+				)
+			)
+		);
+	}
+	
+	Void Draw_WV3Text__S_DL
+	(
+		Str		Text,
+		Vec3_T*	Point,
+		Vec2_T*	VFHUD,
+		Vec3_T*	ScaleX, Vec3_T* ScaleY,
+		Vec4_T*	Alpha,
+		Int		ID1,
+		Int		ID2,
+		Fixed	FxHlFOV			= 0.125,//== FOV 90
+		Flags_	Flags			= 0,
+		Fixed	OffsetX			= 0,
+		Fixed	OffsetY			= 0,
+		Fixed	SV2DstFadeMul1	= 8.0,
+		Fixed	SV2DstFadeMul2	= 2.0,
+		Fixed	SV2DstSizeDiv	= 256,
+		Fixed 	HoldTime		= 0.04,
+		Fixed	Dst				= 0.0
+	)
+	{
+		Fixed dX = Point.X - GetActorX(0);
+		Fixed dY = Point.Y - GetActorY(0);
+		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
+
+		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
+
+		If(_Tmp::V3_0.X <= 0)		{Return;}
+
+		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+
+		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
+		Fixed HUDYSize = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
+
+		Fixed HUDX = Math::NoZero(FxM(VFHUD.X, HUDXSize));
+		Fixed HUDY = Math::NoZero(FxM(VFHUD.Y, HUDYSize));
+		
+		OffsetX = (FxM(OffsetX, HUDXSize) & 0xFFFF0000) | (OffsetX & 0x0000FFFF);
+		OffsetY = (FxM(OffsetY, HUDYSize) & 0xFFFF0000) | (OffsetY & 0x0000FFFF);
+
+		SetHUDSize(HUDX >> 16, HUDY >> 16, False);
+
+		dX = HUDX/2; dY = HUDY/2;
+
+		HUDX =		FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV))		;
+		HUDY =	FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), 1.6);
+
+		dX = dX - FxM(HUDX, dX);
+		dY = dY - FxM(HUDY, dY);
+
+		dZ = VFHUD.X/2;
+		HUDX = RatioMap(dZ + FxM(HUDX, dZ), VFHUD.X, FxD(VFHUD.X, VFHUD.Y));
+
+		dZ = VFHUD.Y/2;
+		HUDY = dZ - FxM(HUDY, dZ);
+
+		dZ =	Math::Min2(	Math::HalfPoint(FxD(HUDX, VFHUD.X), 1.0),
+							Math::HalfPoint(FxD(HUDY, VFHUD.Y), 1.0)	) +
+				Math::Mean2
+				(
+					FxD(SV2DstSizeDiv, Math::FPower2(HUDXSize/2)),
+					FxD(SV2DstSizeDiv, Math::FPower2(HUDYSize/2))
+				);
+		FxHlFOV = FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W);
+		
+		HUDMessage
+		(
+			s:Text; HUDMsg_Plain | (Flags & _WV3Proj__FlagFmt),
+			ID1, CR_Untranslated,
+			(dX & 0xFFFF0000) + OffsetX,
+			(dY & 0xFFFF0000) + OffsetY,
+			HoldTime,
+			FxM(FxHlFOV, Math::Clamp(FxM(dZ, SV2DstFadeMul1), 0.0, 1.0))
+		);
+		HUDMessage
+		(
+			s:Text; HUDMsg_Plain | (Flags & _WV3Proj__FlagFmt),
+			ID2, CR_Untranslated,
+			(dX & 0xFFFF0000) + OffsetX,
+			(dY & 0xFFFF0000) + OffsetY,
+			HoldTime,
+			FxM(FxHlFOV, Math::Clamp(FxM(dZ, SV2DstFadeMul2), 0.0, 1.0))/2
+		);
+	}
+	
+	Void Draw_WV3Text__FIO
+	(
+		Str		Text,
+		Vec3_T*	Point,
+		Vec2_T*	VFHUD,
+		Vec3_T*	ScaleX, Vec3_T* ScaleY,
+		Vec4_T*	Alpha,
+		Int		ID,
+		Fixed	FxHlFOV		= 0.125,//== FOV 90
+		Flags_	Flags		= 0,
+		Fixed	OffsetX		= 0,
+		Fixed	OffsetY		= 0,
+		Fixed	FadeInTime	= 0.75,
+		Fixed	FadeOutTime	= 0.75,
+		Fixed 	HoldTime	= 0.04,
+		Fixed	Dst			= 0.0
+	)
+	{
+		Fixed dX = Point.X - GetActorX(0);
+		Fixed dY = Point.Y - GetActorY(0);
+		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
+
+		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
+
+		If(_Tmp::V3_0.X <= 0)		{Return;}
+
+		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+
+		dX = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
+		dY = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
+		
+		OffsetX = (FxM(OffsetX, dX) & 0xFFFF0000) | (OffsetX & 0x0000FFFF);
+		OffsetY = (FxM(OffsetY, dY) & 0xFFFF0000) | (OffsetY & 0x0000FFFF);
+
+		dX = Math::NoZero(FxM(VFHUD.X, dX));
+		dY = Math::NoZero(FxM(VFHUD.Y, dY));
+
+		SetHUDSize(dX >> 16, dY >> 16, False);
+
+		dX /= 2; dY /= 2;
+
+		dX = dX -		FxM(FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), dX);
+		dY = dY -	FxM(FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), dY), 1.6);
+		
+		HUDMessage
+		(
+			s:Text; HUDMsg_FadeInOut | (Flags & _WV3Proj__FlagFmt),
+			ID, CR_Untranslated,
+			(dX & 0xFFFF0000) + OffsetX,
+			(dY & 0xFFFF0000) + OffsetY,
+			HoldTime, FadeInTime, FadeOutTime,
+			FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W)
+		);
+	}
+	
+	Void Draw_WV3Text__FIO_S
+	(
+		Str		Text,
+		Vec3_T*	Point,
+		Vec2_T*	VFHUD,
+		Vec3_T*	ScaleX, Vec3_T* ScaleY,
+		Vec4_T*	Alpha,
+		Int		ID,
+		Fixed	FxHlFOV			= 0.125,//== FOV 90
+		Flags_	Flags			= 0,
+		Fixed	OffsetX			= 0,
+		Fixed	OffsetY			= 0,
+		Fixed	SV2DstFadeMul	= 8.0,
+		Fixed	SV2DstSizeDiv	= 256,
+		Fixed	FadeInTime		= 0.75,
+		Fixed	FadeOutTime		= 0.75,
+		Fixed 	HoldTime		= 0.04,
+		Fixed	Dst				= 0.0
+	)
+	{
+		Fixed dX = Point.X - GetActorX(0);
+		Fixed dY = Point.Y - GetActorY(0);
+		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
+
+		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
+
+		If(_Tmp::V3_0.X <= 0)		{Return;}
+
+		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+
+		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
+		Fixed HUDYSize = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
+
+		Fixed HUDX = Math::NoZero(FxM(VFHUD.X, HUDXSize));
+		Fixed HUDY = Math::NoZero(FxM(VFHUD.Y, HUDYSize));
+		
+		OffsetX = (FxM(OffsetX, HUDXSize) & 0xFFFF0000) | (OffsetX & 0x0000FFFF);
+		OffsetY = (FxM(OffsetY, HUDYSize) & 0xFFFF0000) | (OffsetY & 0x0000FFFF);
+
+		SetHUDSize(HUDX >> 16, HUDY >> 16, False);
+
+		dX = HUDX/2; dY = HUDY/2;
+
+		HUDX =		FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV))		;
+		HUDY =	FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), 1.6);
+
+		dX = dX - FxM(HUDX, dX);
+		dY = dY - FxM(HUDY, dY);
+
+		dZ = VFHUD.X/2;
+		HUDX = RatioMap(dZ + FxM(HUDX, dZ), VFHUD.X, FxD(VFHUD.X, VFHUD.Y));
+
+		dZ = VFHUD.Y/2;
+		HUDY = dZ - FxM(HUDY, dZ);
+		
+		HUDMessage
+		(
+			s:Text; HUDMsg_FadeInOut | (Flags & _WV3Proj__FlagFmt),
+			ID, CR_Untranslated,
+			(dX & 0xFFFF0000) + OffsetX,
+			(dY & 0xFFFF0000) + OffsetY,
+			HoldTime, FadeInTime, FadeOutTime,
+			FxM
+			(
+				FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W),
+				Math::Clamp
+				(
+					FxM
+					(
+						Math::Min2(	Math::HalfPoint(FxD(HUDX, VFHUD.X), 1.0),
+									Math::HalfPoint(FxD(HUDY, VFHUD.Y), 1.0)	) +
+						Math::Mean2
+						(
+							FxD(SV2DstSizeDiv, Math::FPower2(HUDXSize/2)),
+							FxD(SV2DstSizeDiv, Math::FPower2(HUDYSize/2))
+						),
+						SV2DstFadeMul
+					), 0.0, 1.0
+				)
+			)
+		);
+	}
+	
+	Void Draw_WV3Text__FIO_S_DL
+	(
+		Str		Text,
+		Vec3_T*	Point,
+		Vec2_T*	VFHUD,
+		Vec3_T*	ScaleX, Vec3_T* ScaleY,
+		Vec4_T*	Alpha,
+		Int		ID1,
+		Int		ID2,
+		Fixed	FxHlFOV			= 0.125,//== FOV 90
+		Flags_	Flags			= 0,
+		Fixed	OffsetX			= 0,
+		Fixed	OffsetY			= 0,
+		Fixed	SV2DstFadeMul1	= 8.0,
+		Fixed	SV2DstFadeMul2	= 2.0,
+		Fixed	SV2DstSizeDiv	= 256,
+		Fixed	FadeInTime		= 0.75,
+		Fixed	FadeOutTime		= 0.75,
+		Fixed 	HoldTime		= 0.04,
+		Fixed	Dst				= 0.0
+	)
+	{
+		Fixed dX = Point.X - GetActorX(0);
+		Fixed dY = Point.Y - GetActorY(0);
+		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
+
+		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
+
+		If(_Tmp::V3_0.X <= 0)		{Return;}
+
+		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+
+		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
+		Fixed HUDYSize = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
+
+		Fixed HUDX = Math::NoZero(FxM(VFHUD.X, HUDXSize));
+		Fixed HUDY = Math::NoZero(FxM(VFHUD.Y, HUDYSize));
+		
+		OffsetX = (FxM(OffsetX, HUDXSize) & 0xFFFF0000) | (OffsetX & 0x0000FFFF);
+		OffsetY = (FxM(OffsetY, HUDYSize) & 0xFFFF0000) | (OffsetY & 0x0000FFFF);
+
+		SetHUDSize(HUDX >> 16, HUDY >> 16, False);
+
+		dX = HUDX/2; dY = HUDY/2;
+
+		HUDX =		FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV))		;
+		HUDY =	FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), 1.6);
+
+		dX = dX - FxM(HUDX, dX);
+		dY = dY - FxM(HUDY, dY);
+
+		dZ = VFHUD.X/2;
+		HUDX = RatioMap(dZ + FxM(HUDX, dZ), VFHUD.X, FxD(VFHUD.X, VFHUD.Y));
+
+		dZ = VFHUD.Y/2;
+		HUDY = dZ - FxM(HUDY, dZ);
+
+		dZ =	Math::Min2(	Math::HalfPoint(FxD(HUDX, VFHUD.X), 1.0),
+							Math::HalfPoint(FxD(HUDY, VFHUD.Y), 1.0)	) +
+				Math::Mean2
+				(
+					FxD(SV2DstSizeDiv, Math::FPower2(HUDXSize/2)),
+					FxD(SV2DstSizeDiv, Math::FPower2(HUDYSize/2))
+				);
+		FxHlFOV = FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W);
+		
+		HUDMessage
+		(
+			s:Text; HUDMsg_FadeInOut | (Flags & _WV3Proj__FlagFmt),
+			ID1, CR_Untranslated,
+			(dX & 0xFFFF0000) + OffsetX,
+			(dY & 0xFFFF0000) + OffsetY,
+			HoldTime, FadeInTime, FadeOutTime,
+			FxM(FxHlFOV, Math::Clamp(FxM(dZ, SV2DstFadeMul1), 0.0, 1.0))
+		);
+		HUDMessage
+		(
+			s:Text; HUDMsg_FadeInOut | (Flags & _WV3Proj__FlagFmt),
+			ID2, CR_Untranslated,
+			(dX & 0xFFFF0000) + OffsetX,
+			(dY & 0xFFFF0000) + OffsetY,
+			HoldTime, FadeInTime, FadeOutTime/2,
+			FxM(FxHlFOV, Math::Clamp(FxM(dZ, SV2DstFadeMul2), 0.0, 1.0))/2
+		);
+	}
+}

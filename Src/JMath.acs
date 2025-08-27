@@ -1,0 +1,840 @@
+#Library		"JMath"
+#NoCompact
+
+#pragma pointer_space global 0
+#pragma raw define on
+#pragma raw include on
+#Define JLib__Enable_Dev_Only True
+#Include		"JDefs.acs"
+#pragma raw include off
+
+#Import			"zcommon.bcs"
+
+#Import			"JCommon.acs"
+#LinkLibrary	"JCommon"
+
+#ifdef __INCLUDED__
+	#error "\"JMath\" is need to be #import\'ed instead of #include\'d"
+#endif
+
+/*
+╔══════════════════════════════════╗
+║Compiled with                     ║
+║    ▀▀▀█ ▀█▀      █▀▀▄ █▀▀█ █▀▀█  ║
+║      ▄▀  █       █  █ █    █     ║
+║    ▄▀    █  ▀▀▀▀ █▀▀▄ █    █     ║
+║    █▄▄▄  █       █▄▄▀ █▄▄█ █▄▄█  ║
+╚══════════════════════════════════╝
+*/
+
+
+Namespace MathBI//BI - Basic Input, Basic type Input, e.g no structures in input
+{
+	Void RotateV3_RPA
+	(
+		Fixed pX, Fixed pY, Fixed pZ,
+		Fixed pR, Fixed pP, Fixed pA,
+		Vec3_T* Output
+	)
+	{
+		If(!Output)	{Return;}
+		
+		Fixed xY, xZ, rX, rY, rZ;
+		
+		xY = FxM(pY, Cos(pR)) + FxM(pZ, Sin(-pR));
+		xZ = FxM(pY, Sin(pR)) + FxM(pZ, Cos(pR));
+		
+		rZ = FxM(xZ, Cos(-pP)) + FxM(pX, Sin(-pP));
+		rX = FxM(xZ, Sin(pP)) + FxM(pX, Cos(pP));
+		
+		rY = FxM(xY, Cos(pA)) + FxM(rX, Sin(pA));
+		rX = FxM(xY, Sin(-pA)) + FxM(rX, Cos(pA));
+		
+		Output.X = rX;
+		Output.Y = rY;
+		Output.Z = rZ;
+	}
+	
+	Void RotateV3_PA
+	(
+		Fixed pX, Fixed pY, Fixed pZ,
+		Fixed pP, Fixed pA,
+		Vec3_T* Output
+	)
+	{
+		If(!Output)	{Return;}
+		Fixed rX, rY, rZ;
+		
+		rZ = FxM(pZ, Cos(-pP)) + FxM(pX, Sin(-pP));
+		rX = FxM(pZ, Sin(pP)) + FxM(pX, Cos(pP));
+		
+		rY = FxM(pY, Cos(pA)) + FxM(rX, Sin(pA));
+		rX = FxM(pY, Sin(-pA)) + FxM(rX, Cos(pA));
+		
+		Output.X = rX;
+		Output.Y = rY;
+		Output.Z = rZ;
+	}
+	
+	Void RotateV3_A
+	(
+		Fixed pX, Fixed pY, Fixed pZ,
+		Fixed A,
+		Vec3_T* Output
+	)//A - Angle
+	{
+		If(!Output)	{Return;}
+		
+		Output.X = FxM(pX, Cos(A)) + FxM(pY, Sin(A));
+		Output.Y = FxM(pX, Sin(-A)) + FxM(pY, Cos(A));
+		Output.Z = pZ;
+	}
+	
+	Void RAP_To_XYZ
+	(
+		Fixed pR, Fixed pA, Fixed pP,
+		Vec3_T* Output
+	)
+	{
+		If(!Output)	{Return;}
+		
+		Output.X = FxM(	Cos(pP),
+						FxM(Cos(pA), pR)	);
+		Output.Y = FxM(	Cos(pP),
+						FxM(Sin(pA), pR)	);
+		Output.Z = FxM(   Sin(-pP), pR	);
+	}
+	
+	Void XYZ_To_RAP
+	(
+		Fixed pX, Fixed pY, Fixed pZ,
+		Vec3_T* Output
+	)
+	{
+		If(!Output)	{Return;}
+		Fixed R = Distance2D(pX, pY);
+		
+		Output.X = Distance2D	(R, pZ);
+		Output.Y = Atan2		(pX, pY);
+		Output.Z = Atan2		(R, pZ);
+	}
+}
+
+Namespace MathRPtr//RPtr - Return Ptr, Return PoinTeR. Init. structure and return pointer to it
+{
+	Vec3_T* RotateV3_RPA(Vec3_T* V3, Vec3_T* RPA)//RPA - Roll, Pitch, Angle
+	{
+		Fixed xY, xZ, rX, rY, rZ;
+		
+		xY = FxM(V3.Y, Cos(RPA.X)) + FxM(V3.Z, Sin(-RPA.X));
+		xZ = FxM(V3.Y, Sin(RPA.X)) + FxM(V3.Z, Cos(RPA.X));
+		
+		rZ = FxM(xZ, Cos(-RPA.Y)) + FxM(V3.X, Sin(-RPA.Y));
+		rX = FxM(xZ, Sin(RPA.Y)) + FxM(V3.X, Cos(RPA.Y));
+		
+		rY = FxM(xY, Cos(RPA.Z)) + FxM(rX, Sin(RPA.Z));
+		rX = FxM(xY, Sin(-RPA.Z)) + FxM(rX, Cos(RPA.Z));
+		
+		Return Vec3_C(rX, rY, rZ);
+	}
+	
+	Vec3_T* RotateV3_PA(Vec3_T* V3, Vec2_T* PA)//PA - Pitch, Angle
+	{
+		Fixed rX, rY, rZ;
+		
+		rZ = FxM(V3.Z, Cos(-PA.X)) + FxM(V3.X, Sin(-PA.X));
+		rX = FxM(V3.Z, Sin(PA.X)) + FxM(V3.X, Cos(PA.X));
+		
+		rY = FxM(V3.Y, Cos(PA.Y)) + FxM(rX, Sin(PA.Y));
+		rX = FxM(V3.Y, Sin(-PA.Y)) + FxM(rX, Cos(PA.Y));
+		
+		Return Vec3_C(rX, rY, rZ);
+	}
+	
+	Vec3_T* RotateV3_A(Vec3_T* V3, Fixed A)//A - Angle
+	{
+		Return Vec3_C(	FxM(V3.X, Cos(A)) + FxM(V3.Y, Sin(A)),
+						FxM(V3.X, Sin(-A)) + FxM(V3.Y, Cos(A)),
+						V3.Z									);
+	}
+	
+	Vec3_T* RAP_To_XYZ(Vec3_T* RAP)//RAP - Polar coordinates, {Radius, Angle, Pitch}
+	{		
+		Return Vec3_C(	FxM(	Cos(RAP.Z),
+							FxM(Cos(RAP.Y), RAP.X)	),
+						FxM(	Cos(RAP.Z),
+							FxM(Sin(RAP.Y), RAP.X)	),
+						FxM(   Sin(-RAP.Z), RAP.X	)	);
+	}
+	
+	Vec3_T* XYZ_To_RAP(Vec3_T* XYZ)//RAP - Polar coordinates, {Radius, Angle, Pitch}
+	{
+		Fixed R = Distance2D(XYZ.X, XYZ.Y);
+		
+		Return Vec3_C(	Distance2D(R, XYZ.Z),
+						Atan2(XYZ.X, XYZ.Y),
+						Atan2(R, XYZ.Z)		);
+	}
+}
+
+Namespace Math
+{
+	Num_ Abs(Num_ Val)
+	{
+//		Return	(Val < 0) ? (-Val) : (Val);		Slow. It takes a fcking 0.01 ns to calculate	
+		Int Sign = Val >> 31;
+		Return (Val ^ Sign) - Sign;			//	Yeah, that's good, now it's 1/2147483647 nanosecounds faster
+	}
+	
+	Byte ByteClamp(Num_ Val)
+	{
+		If(Val < UInt8_Min)	{	Return UInt8_Min;	}
+		If(Val > UInt8_Max)	{	Return UInt8_Max;	}
+								Return Val;
+	}
+	
+	Num_ Clamp(Num_ Val, Num_ Min, Num_ Max)
+	{
+		If(Val <= Min)	{	Return Min;	}
+		If(Val >= Max)	{	Return Max;	}
+							Return Val;
+	}
+	
+	Num_ FMod(Num_ Val, Num_ Max)
+	{
+		Return Val - (IFloor(FxD(Val, Max)) * Max);
+	}
+	
+	Byte ByteFMod(Int Val)
+	{
+		Return Val - (IFloor((Val << 16) / UInt8_Max) * UInt8_Max);
+	}
+	
+	Num_ Bounce(Num_ Val, Num_ Min, Num_ Max)
+	{
+		Max -= Min;
+		Val = (Val - Min) % (Max*2);
+		While(Val != 0)
+		{
+			If((Val % (Max*3)) == 0)
+			{
+				Break;
+			}
+			If(Val < 0)
+			{
+				Val = -Val;
+			}
+			If(Val > Max)
+			{
+				Val = Max - (Val - Max);
+				Continue;
+			}
+			Break;
+		}
+		Return Val + Min;
+	}
+	
+	Num_ BounceEx(Num_ Val, Num_ Min, Num_ Max, Int[]* Inversed)
+	{
+		If(InRange(Val, Min, Max))
+		{
+			Inversed[0] = 1;
+			Return Val;
+		}
+		Inversed[0] = -1;
+		Max -= Min;
+		Val = (Val - Min) % (Max*2);
+		While(Val != 0)
+		{
+			If((Val % (Max*3)) == 0)
+			{
+				Break;
+			}
+			If(Val < 0)
+			{
+				Val = -Val;
+			}
+			If(Val > Max)
+			{
+				Val = Max - (Val - Max);
+				Continue;
+			}
+			Break;
+		}
+		Return Val + Min;
+	}
+	
+	Int Sign(Num_ Val)	//	-1 - Negative, 1 - Positive
+	{
+		Return (Val >> 31) | 1;
+	}
+	
+	Bool BSign(Num_ Val)	//	0 - Negative, 1 - Positive
+	{
+		Return (Val >> 31) + 1;
+	}
+	
+	Int IRound(Fixed Val, Fixed CeilingValue = 0.5)
+	{
+		Return ITrunc(Val) + (((Val & 65535) < (CeilingValue & 65535)) * Sign(Val));
+	}
+	
+	Fixed FRound(Fixed Val, Fixed CeilingValue = 0.5)
+	{
+		Return IRound(Val, CeilingValue) << 16;
+	}
+	
+	Int IFloor(Fixed Val)
+	{
+		Return Val >> 16;
+	}
+	
+	Fixed FFloor(Fixed Val)
+	{
+		Return Val & 0xFFFF0000;
+	}
+	
+	Int ICeil(Fixed Val)
+	{
+		Return -IFloor(-Val);
+	}
+	
+	Fixed FCeil(Fixed Val)
+	{
+		Return -FFloor(-Val);
+	}
+	
+	Int ITrunc(Fixed Val)
+	{
+		Return Val / 65536;
+	}
+	
+	Fixed FTrunc(Fixed Val)
+	{
+		Return (Val / 65536) << 16;
+	}
+	
+	Bool InRange(Num_ Value, Num_ Min, Num_ Max)
+	{
+		If(Value < Min)	{	Return False;	}
+		If(Value > Max)	{	Return False;	}
+							Return True;
+	}
+	
+	Num_ NoZero(Num_ Val)
+	{
+		Return (Val == 0) ? (1) : (Val);
+	}
+	
+	Num_ NoZeroC(Num_ Val, Num_ ZeroVal)
+	{
+		Return (Val == 0) ? (ZeroVal) : (Val);
+	}
+	
+	
+	Fixed Clamp_F1(Fixed Val)
+	{
+		If(Val > 1.0)	{	Return	1.0	;	}
+		If(Val < -1.0)	{	Return	-1.0;	}
+							Return	Val	;
+	}
+	
+	Void Rotate__WV3_SV2
+	(
+		Fixed pX, Fixed pY, Fixed pZ,
+		Fixed pR, Fixed pP, Fixed pA,
+		Vec3_T* Output
+	)/*Used in rotations for projecions of World 3D Vectors.
+	Have cursed behaviour in rotating 3D World Vectors for using it as new position, for example for spawning an actor.*/
+	{
+		If(!Output)	{Return;}
+		
+		Fixed tX, tY, rX, rY, rZ;
+
+		tX = FxM(pX, Cos(-pA)) - FxM(pY, Sin(-pA));
+		tY = FxM(pX, Sin(-pA)) + FxM(pY, Cos(-pA));
+		
+		rX = FxM(tX, Cos(pP)) - FxM(pZ, Sin(pP));
+		rZ = FxM(tX, Sin(pP)) + FxM(pZ, Cos(pP));
+		
+		rY = FxM(tY, Cos(-pR)) - FxM(rZ, Sin(-pR));
+		rZ = FxM(tY, Sin(-pR)) + FxM(rZ, Cos(-pR));
+		
+		Output.X = rX;
+		Output.Y = rY;
+		Output.Z = rZ;
+	}
+	
+	Void RotateV3_RPA(Vec3_T* V3, Vec3_T* RPA, Vec3_T* Output)//RPA - Roll, Pitch, Angle
+	{
+		If(!Output)	{Return;}
+		
+		Fixed xY, xZ, rX, rY, rZ;
+		
+		xY = FxM(V3.Y, Cos(RPA.X)) + FxM(V3.Z, Sin(-RPA.X));
+		xZ = FxM(V3.Y, Sin(RPA.X)) + FxM(V3.Z, Cos(RPA.X));
+		
+		rZ = FxM(xZ, Cos(-RPA.Y)) + FxM(V3.X, Sin(-RPA.Y));
+		rX = FxM(xZ, Sin(RPA.Y)) + FxM(V3.X, Cos(RPA.Y));
+		
+		rY = FxM(xY, Cos(RPA.Z)) + FxM(rX, Sin(RPA.Z));
+		rX = FxM(xY, Sin(-RPA.Z)) + FxM(rX, Cos(RPA.Z));
+		
+		Output.X = rX;
+		Output.Y = rY;
+		Output.Z = rZ;
+	}
+	
+	Void RotateV3_PA(Vec3_T* V3, Vec2_T* PA, Vec3_T* Output)//PA - Pitch, Angle
+	{
+		If(!Output)	{Return;}
+		Fixed rX, rY, rZ;
+		
+		rZ = FxM(V3.Z, Cos(-PA.X)) + FxM(V3.X, Sin(-PA.X));
+		rX = FxM(V3.Z, Sin(PA.X)) + FxM(V3.X, Cos(PA.X));
+		
+		rY = FxM(V3.Y, Cos(PA.Y)) + FxM(rX, Sin(PA.Y));
+		rX = FxM(V3.Y, Sin(-PA.Y)) + FxM(rX, Cos(PA.Y));
+		
+		Output.X = rX;
+		Output.Y = rY;
+		Output.Z = rZ;
+	}
+	
+	Void RotateV3_A(Vec3_T* V3, Fixed A, Vec3_T* Output)//A - Angle
+	{
+		If(!Output)	{Return;}
+		
+		Output.X = FxM(V3.X, Cos(A)) + FxM(V3.Y, Sin(A));
+		Output.Y = FxM(V3.X, Sin(-A)) + FxM(V3.Y, Cos(A));
+		Output.Z = V3.Z;
+	}
+	
+	Void RAP_To_XYZ(Vec3_T* RAP, Vec3_T* Output)//RAP - Polar coordinates, {Radius, Angle, Pitch}
+	{
+		If(!Output)	{Return;}
+		
+		Output.X = FxM(	Cos(RAP.Z),
+						FxM(Cos(RAP.Y), RAP.X)	);
+		Output.Y = FxM(	Cos(RAP.Z),
+						FxM(Sin(RAP.Y), RAP.X)	);
+		Output.Z = FxM(	Sin(-RAP.Z), RAP.X		);
+	}
+	
+	Void XYZ_To_RAP(Vec3_T* XYZ, Vec3_T* Output)//RAP - Polar coordinates, {Radius, Angle, Pitch}
+	{
+		If(!Output)	{Return;}
+		Fixed R = Distance2D(XYZ.X, XYZ.Y);
+		
+		Output.X = Distance2D	(R, XYZ.Z);
+		Output.Y = Atan2		(XYZ.X, XYZ.Y);
+		Output.Z = Atan2		(R, XYZ.Z);
+	}
+	
+	Fixed Tan(Fixed Ang)
+	{
+		If((Sin(Ang) == 0) || (Cos(Ang) == 0))
+		
+							{	Return 0				;	}
+		Return 					FxD(Sin(Ang), Cos(Ang))	;
+	}
+	
+	Fixed Ctg(Fixed Ang)
+	{
+		If((Sin(Ang) == 0) || (Cos(Ang) == 0))
+		
+							{	Return 0				;	}
+		Return 					FxD(Cos(Ang), Sin(Ang))	;
+	}
+	
+	Fixed Sec(Fixed Ang)
+	{
+		If(Cos(Ang) == 0)	{	Return 0		;	}
+		Return 					FxD(1, Cos(Ang));
+	}
+	
+	Fixed Csc(Fixed Ang)
+	{
+		If(Sin(Ang) == 0)	{	Return 0		;	}
+		Return 					FxD(1, Sin(Ang));
+	}
+	
+	Fixed XSin_YCos(Fixed X, Fixed Y, Fixed Angle)
+	{
+		Return FxM(X, Sin(Angle)) + FxM(Y, Cos(Angle));
+	}
+	
+	Fixed XCos(Fixed X, Fixed Angle)
+	{
+		Return FxM(X, Cos(Angle));
+	}
+	
+	Fixed XSin(Fixed X, Fixed Angle)
+	{
+		Return FxM(X, Sin(Angle));
+	}
+	
+	Fixed Distance3D(Fixed X, Fixed Y, Fixed Z)
+	{
+		Return Distance2D(Distance2D(X, Y), Z);
+	}
+	
+	Fixed Map(Fixed Val, Fixed fromMin, Fixed fromMax, Fixed toMin, Fixed toMax)
+    {
+        return FxD(Val - fromMin, FxD(fromMax - fromMin, toMax - toMin)) + toMin;
+    }
+	
+	Fixed MapTo(Fixed Val, Fixed fromMax, Fixed toMax)
+    {
+        return FxD(Val, FxD(fromMax, toMax));
+    }
+	
+	Fixed HalfPoint(Fixed Val, Fixed Max)
+	{
+		IF(Val >= (Max/2))
+		{
+			Return (Max - Val) * 2;
+		}
+		Return Val * 2;
+	}
+	
+	
+	
+	Num_ Mean2(Num_ Val1, Num_ Val2)
+	{
+		Return (Val1 + Val2)/2;
+	}
+	
+	Num_ Mean3(Num_ Val1, Num_ Val2, Num_ Val3)
+	{
+		Return (Val1 + Val2 + Val3)/3;
+	}
+	
+	Num_ Mean4(Num_ Val1, Num_ Val2, Num_ Val3, Num_ Val4)
+	{
+		Return (Val1 + Val2 + Val3 + Val4)/4;
+	}
+	
+	Num_ Mean5(Num_ Val1, Num_ Val2, Num_ Val3, Num_ Val4, Num_ Val5)
+	{
+		Return (Val1 + Val2 + Val3 + Val4 + Val5)/5;
+	}
+	
+	
+	
+	Num_ Mean2_Big(Num_ Val1, Num_ Val2)
+	{
+		Return (Val1/2) + (Val2/2);
+	}
+	
+	Num_ Mean3_Big(Num_ Val1, Num_ Val2, Num_ Val3)
+	{
+		Return (Val1/3) + (Val2/3) + (Val3/3);
+	}
+	
+	Num_ Mean4_Big(Num_ Val1, Num_ Val2, Num_ Val3, Num_ Val4)
+	{
+		Return (Val1/4) + (Val2/4) + (Val3/4) + (Val4/4);
+	}
+	
+	Num_ Mean5_Big(Num_ Val1, Num_ Val2, Num_ Val3, Num_ Val4, Num_ Val5)
+	{
+		Return (Val1/5) + (Val2/5) + (Val3/5) + (Val4/5) + (Val5/5);
+	}
+	
+	
+	
+	Num_ MeanC(Num_[]* Array)
+	{
+		Num_ Output; Int Len = LengthOf(Array);
+		
+		For(Int I = Len; I > 0; I -= 1)
+		{
+			Output += Array[I];
+		}
+		
+		Return Output / Len;
+	}
+	
+	Num_ MeanC_Big(Num_[]* Array)
+	{
+		Num_ Output; Int Len = LengthOf(Array);
+		
+		For(Int I = Len; I > 0; I -= 1)
+		{
+			Output += Array[I] / Len;
+		}
+		
+		Return Output;
+	}
+	
+	Fixed FPropMean2(Fixed Val1, Fixed Val2)
+	{
+		Return FixedSqrt(Val1 + Val2);
+	}
+	
+	Int IPropMean2(Int Val1, Int Val2)
+	{
+		Return Sqrt(Val1 + Val2);
+	}
+	
+	
+	
+	Int IPower2(Int Val){	If(Val >  46340)	{	Return Int32_Max;	}
+							If(Val < -46340)	{	Return Int32_Max;	}
+							Return Val * Val;							}
+	
+	
+	Int IPower3(Int Val){	If(Val >  1290)		{	Return Int32_Max;	}
+							If(Val < -1290)		{	Return Int32_Min;	}
+							Return Val * Val * Val;						}
+	
+	
+	Int IPower4(Int Val){	If(Val >  215)		{	Return Int32_Max;	}
+							If(Val < -215)		{	Return Int32_Max;	}
+							Return Val * Val * Val * Val;				}
+	
+	
+	Int IPower5(Int Val){	If(Val >  73)		{	Return Int32_Max;	}
+							If(Val < -73)		{	Return Int32_Min;	}
+							Return Val * Val * Val * Val * Val;			}
+	
+	
+	Int IPower6(Int Val){	If(Val >  35)		{	Return Int32_Max;	}
+							If(Val < -35)		{	Return Int32_Max;	}
+							Return Val * Val * Val * Val * Val * Val;	}
+	
+	
+	Int IPower7(Int Val){	If(Val >  21)		{	Return Int32_Max;		}
+							If(Val < -21)		{	Return Int32_Min;		}
+							Return Val * Val * Val * Val * Val * Val * Val;	}
+	
+	Int IPower8(Int Val){	If(Val >  14)		{	Return Int32_Max;				}
+							If(Val < -14)		{	Return Int32_Max;				}
+							Return Val * Val * Val * Val * Val * Val * Val * Val;	}
+	
+	
+	
+	Fixed FPower2(Fixed Val){	If(Val >  11863102)	{	Return Int32_Max;	}
+								If(Val < -11863102)	{	Return Int32_Max;	}
+								Return FxM(Val, Val);						}
+	
+	
+	Fixed FPower3(Fixed Val){	If(Val >  2097130)	{	Return Int32_Max;	}
+								If(Val < -2097130)	{	Return Int32_Min;	}
+								Return FxM(Val, FxM(Val, Val));				}
+	
+	
+	Fixed FPower4(Fixed Val){	If(Val >  881737)	{	Return Int32_Max;	}
+								If(Val < -881737)	{	Return Int32_Max;	}
+								Return FxM(Val, FxM(Val, FxM(Val, Val)));	}
+	
+	
+	Fixed FPower5(Fixed Val){	If(Val >  524284)	{	Return Int32_Max;			}
+								If(Val < -524284)	{	Return Int32_Min;			}
+								Return FxM(Val, FxM(Val, FxM(Val, FxM(Val, Val))));	}
+	
+	
+	Fixed FPower6(Fixed Val){	If(Val >  370725)	{	Return Int32_Max;						}
+								If(Val < -370725)	{	Return Int32_Max;						}
+								Return FxM(Val, FxM(Val, FxM(Val, FxM(Val, FxM(Val, Val)))));	}
+	
+	
+	Fixed FPower7(Fixed Val){	If(Val >  289429)	{	Return Int32_Max;								}
+								If(Val < -289429)	{	Return Int32_Min;								}
+								Return FxM(Val, FxM(Val, FxM(Val, FxM(Val, FxM(Val, FxM(Val, Val))))));	}
+	
+	
+	Fixed FPower8(Fixed Val){	If(Val >  240386)	{	Return Int32_Max;											}
+								If(Val < -240386)	{	Return Int32_Max;											}
+								Return FxM(Val, FxM(Val, FxM(Val, FxM(Val, FxM(Val, FxM(Val, FxM(Val, Val)))))));	}
+	
+	//IDK For why you need more than 8 powers o_0
+	
+	
+	Num_ Min2(Num_ Val1, Num_ Val2)
+	{
+		Return (Val1 > Val2) ? (Val2) : (Val1);
+	}
+	
+	Num_ Max2(Num_ Val1, Num_ Val2)
+	{
+		Return (Val1 < Val2) ? (Val2) : (Val1);
+	}
+	
+	Num_ Min3(Num_ Val1, Num_ Val2, Num_ Val3)
+	{
+		Return Min2(Val1, Min2(Val2, Val3));
+	}
+	
+	Num_ Max3(Num_ Val1, Num_ Val2, Num_ Val3)
+	{
+		Return Max2(Val1, Max2(Val2, Val3));
+	}
+	
+	Num_ Min4(Num_ Val1, Num_ Val2, Num_ Val3, Num_ Val4)
+	{
+		Return Min2(Val1, Min2(Val2, Min2(Val3, Val4)));
+	}
+	
+	Num_ Max4(Num_ Val1, Num_ Val2, Num_ Val3, Num_ Val4)
+	{
+		Return Max2(Val1, Max2(Val2, Min2(Val3, Val4)));
+	}
+	
+	Num_ Min5(Num_ Val1, Num_ Val2, Num_ Val3, Num_ Val4, Num_ Val5)
+	{
+		Return Min2(Val1, Min2(Val2, Min2(Val3, Min2(Val4, Val5))));
+	}
+	
+	Num_ Max5(Num_ Val1, Num_ Val2, Num_ Val3, Num_ Val4, Num_ Val5)
+	{
+		Return Max2(Val1, Max2(Val2, Min2(Val3, Min2(Val4, Val5))));
+	}
+	
+	Num_ GCD2(Num_ Val1, Num_ Val2)
+	{
+		Num_ Tmp;
+        While(Val2 != 0)
+		{
+            Val1 %= Val2;
+			Tmp = Val1; Val1 = Val2; Val2 = Tmp;//Std:Swap(Void[]* A, Void[]* b);
+        }
+        Return Val1;
+	}
+	
+	Int ILCM2(Int Val1, Int Val2)
+	{
+        Return (Val1 / GCD2(Val1, Val2)) * Val2;
+	}
+	
+	Fixed FLCM2(Fixed Val1, Fixed Val2)
+	{
+        Return FxM(FxD(Val1, GCD2(Val1, Val2)), Val2);
+	}
+	
+	Fixed DFxD(Fixed Val, Fixed Div, Fixed Origin = 1.0)//Delta FxD
+	{
+		Return Origin - FxD(Origin - Val, Div);
+	}
+	
+	Fixed DFxM(Fixed Val, Fixed Mul, Fixed Origin = 1.0)//Delta FxM
+	{
+		Return Origin - FxM(Origin - Val, Mul);
+	}
+	
+	Num_ DDiv(Num_ Val, Int Div, Num_ Origin = 1.0)//Delta Division
+	{
+		Return Origin - ((Origin - Val) / Div);
+	}
+	
+	Num_ DMul(Num_ Val, Int Mul, Num_ Origin = 1.0)//Delta Multiplication
+	{
+		Return Origin - ((Origin - Val) * Mul);
+	}
+}
+
+Namespace IDeg	//Integer DEGree
+{
+	IDeg_ Format(IDeg_ Angle)
+	{
+		If(Angle < 0)
+		{
+			Angle = 360 + (Angle % 360);
+		}
+		Return Angle % 360;
+	}
+	
+	IDeg_ Format180(IDeg_ Angle)
+	{
+		Angle = Format(Angle);
+		If(Angle > 180)	{	Return Angle - 360;}
+							Return Angle;
+	}
+	
+	FDeg_	ToFDeg	(IDeg_ Angle)	{Return Angle << 16;					}	//	Alias to << 16
+	BAng_	ToBAng	(IDeg_ Angle)	{Return FxM(Angle, 1527099484) >> 15;	}
+	NAng_	ToNAng	(IDeg_ Angle)	{Return (Angle << 16) / 360;			}
+}
+
+Namespace FDeg	//Fixed(type) DEGree
+{
+	FDeg_ Format(FDeg_ Angle)
+	{
+		If(Angle < 0.0)
+		{
+			Angle = 360.0 + (Angle % 360.0);
+		}
+		Return Angle % 360.0;
+	}
+	
+	FDeg_ Format180(FDeg_ Angle)
+	{
+		Angle = Format(Angle);
+		If(Angle > 180.0)	{	Return Angle - 360.0;}
+								Return Angle;
+	}
+	
+	IDeg_	ToIDeg	(FDeg_ Angle)	{Return Angle >> 16;			}	//Alias to >> 16
+	BAng_	ToBAng	(FDeg_ Angle)	{Return (Angle / 360) >> 8;		}
+	NAng_	ToNAng	(FDeg_ Angle)	{Return Angle / 360;			}
+}
+
+Namespace NAng	//Normalized ANGle
+{
+	NAng_ Format(NAng_ Angle)
+	{
+		If(Angle < 0.0)
+		{
+			Angle = 1.0 + (Angle % 1.0);
+		}
+		Return Angle % 1.0;
+	}
+	
+	NAng_ Format180(NAng_ Angle)
+	{
+		Angle = Format(Angle);
+		If(Angle > 0.5)	{	Return Angle - 1.0;}
+							Return Angle;
+	}
+	
+	IDeg_	ToIDeg	(NAng_ Angle)	{Return (Angle * 360) >> 16;	}
+	FDeg_	ToFDeg	(NAng_ Angle)	{Return Angle * 360;			}
+	BAng_	ToBAng	(NAng_ Angle)	{Return Angle >> 8;				}	//Alias to >> 8
+}
+
+Namespace BAng	//Byte ANGle
+{
+	BAng_ Format(BAng_ Angle)
+	{
+		If(Angle < 0)
+		{
+			Angle = 256 + (Angle % 256);
+		}
+		Return Angle % 256;
+	}
+	
+	BAng_ Format180(BAng_ Angle)
+	{
+		Angle = Format(Angle);
+		If(Angle > 128)	{	Return Angle - 256;}
+							Return Angle;
+	}
+	
+	IDeg_	ToIDeg	(BAng_ Angle)	{Return (Angle * 360) >> 8;	}
+	FDeg_	ToFDeg	(BAng_ Angle)	{Return (Angle * 360) << 8;	}
+	NAng_	ToNAng	(BAng_ Angle)	{Return Angle << 8;			}	//Alias to << 8
+}
+
+Namespace Math__NoScope//In purposes of using outside the ACS Enviroment.
+{
+	//FF - output: Fixed,	input: Fixed
+	//FI - output: Fixed,	input: Int
+	//II - output: Int,		input: Int
+	//IF - output: Int,		input: Fixed
+	
+	Script "Math_FF_Atan2"	(Fixed_	X, Fixed_ Y)			{SetResultValue(Atan2(X, Y));				}
+	Script "Math_FF_Atan"	(Fixed_	X)						{SetResultValue(Atan(X));					}
+	Script "Math_FF_Dist2D" (Fixed_	X, Fixed_ Y)			{SetResultValue(Distance2D(X, Y));			}
+	Script "Math_FF_Dist3D" (Fixed_	X, Fixed_ Y, Fixed_ Z)	{SetResultValue(Math::Distance3D(X, Y, Z));	}
+}

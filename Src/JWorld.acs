@@ -1,0 +1,91 @@
+#Library		"JWorld"
+#NoCompact
+
+#pragma pointer_space global 0
+#pragma raw define on
+#pragma raw include on
+#Define JLib__Enable_Dev_Only True
+#Include		"JDefs.acs"
+#pragma raw include off
+
+#Import			"zcommon.bcs"
+
+#Import			"JCommon.acs"
+#LinkLibrary	"JCommon"
+
+#ifdef __INCLUDED__
+	#error "\"JWorld\" is need to be #import\'ed instead of #include\'d"
+#endif
+
+/*
+╔══════════════════════════════════╗
+║Compiled with                     ║
+║    ▀▀▀█ ▀█▀      █▀▀▄ █▀▀█ █▀▀█  ║
+║      ▄▀  █       █  █ █    █     ║
+║    ▄▀    █  ▀▀▀▀ █▀▀▄ █    █     ║
+║    █▄▄▄  █       █▄▄▀ █▄▄█ █▄▄█  ║
+╚══════════════════════════════════╝
+*/
+
+Namespace MapRPtr//RPtr - Return Ptr, Return PoinTeR. Init. structure and return pointer to it
+{
+	Vec3_T* TID_GetPos(Int TID)
+	{
+		Return Vec3_C(	TID_GetX(TID),
+						TID_GetY(TID),
+						TID_GetZ(TID)	);
+	}
+	
+	Vec3_T* TID_GetVel(Int TID)
+	{
+		Return Vec3_C(	TID_GetVX(TID),
+						TID_GetVY(TID),
+						TID_GetVZ(TID)	);
+	}
+}
+
+Namespace Map
+{
+	Void TID_GetPos(Int TID, Vec3_T* Output)
+	{
+		Output.X = TID_GetX(TID);
+		Output.Y = TID_GetY(TID);
+		Output.Z = TID_GetZ(TID);
+	}
+	
+	Void TID_GetVel(Int TID, Vec3_T* Output)
+	{
+		Output.X = TID_GetVX(TID);
+		Output.Y = TID_GetVY(TID);
+		Output.Z = TID_GetVZ(TID);
+	}
+	
+	Bool TID_SetX	(Int TID, Int X, Bool Fog = False)			{Return TID_SetPos(TID,	X,				TID_GetY(TID),	TID_GetZ(TID),	Fog);}
+	Bool TID_SetY	(Int TID, Int Y, Bool Fog = False)			{Return TID_SetPos(TID,	TID_GetX(TID),	Y,				TID_GetZ(TID),	Fog);}
+	Bool TID_SetZ	(Int TID, Int Z, Bool Fog = False)			{Return TID_SetPos(TID,	TID_GetX(TID),	TID_GetY(TID),	Z,				Fog);}
+	Bool TID_SetXY	(Int TID, Int X, Int Y, Bool Fog = False)	{Return TID_SetPos(TID,	X,				Y,				TID_GetZ(TID),	Fog);}
+	Bool TID_SetXZ	(Int TID, Int X, Int Z, Bool Fog = False)	{Return TID_SetPos(TID,	X,				TID_GetY(TID),	Z,				Fog);}
+	Bool TID_SetYZ	(Int TID, Int Y, Int Z, Bool Fog = False)	{Return TID_SetPos(TID,	TID_GetX(TID),	Y,				Z,				Fog);}
+	
+	Bool TID_AddX	(Int TID, Int X, Bool Fog = False)			{Return TID_SetPos(TID,	TID_GetX(TID)+X,	TID_GetY(TID),		TID_GetZ(TID),		Fog);}
+	Bool TID_AddY	(Int TID, Int Y, Bool Fog = False)			{Return TID_SetPos(TID,	TID_GetX(TID),		TID_GetY(TID)+Y,	TID_GetZ(TID),		Fog);}
+	Bool TID_AddZ	(Int TID, Int Z, Bool Fog = False)			{Return TID_SetPos(TID,	TID_GetX(TID),		TID_GetY(TID),		TID_GetZ(TID)+Z,	Fog);}
+	Bool TID_AddXY	(Int TID, Int X, Int Y, Bool Fog = False)	{Return TID_SetPos(TID,	TID_GetX(TID)+X,	TID_GetY(TID)+Y,	TID_GetZ(TID),		Fog);}
+	Bool TID_AddXZ	(Int TID, Int X, Int Z, Bool Fog = False)	{Return TID_SetPos(TID,	TID_GetX(TID)+X,	TID_GetY(TID),		TID_GetZ(TID)+Z,	Fog);}
+	Bool TID_AddYZ	(Int TID, Int Y, Int Z, Bool Fog = False)	{Return TID_SetPos(TID,	TID_GetX(TID),		TID_GetY(TID)+Y,	TID_GetZ(TID)+Z,	Fog);}
+	
+	
+	Bool TID_SetVX	(Int TID, Int X, Bool Bob = False)			{Return TID_SetVel(TID,	X,				TID_GetVY(TID),	TID_GetVZ(TID),	False, Bob);}
+	Bool TID_SetVY	(Int TID, Int Y, Bool Bob = False)			{Return TID_SetVel(TID,	TID_GetVX(TID),	Y,				TID_GetVZ(TID),	False, Bob);}
+	Bool TID_SetVZ	(Int TID, Int Z, Bool Bob = False)			{Return TID_SetVel(TID,	TID_GetVX(TID),	TID_GetVY(TID),	Z,				False, Bob);}
+	Bool TID_SetVXY	(Int TID, Int X, Int Y, Bool Bob = False)	{Return TID_SetVel(TID,	X,				Y,				TID_GetVZ(TID),	False, Bob);}
+	Bool TID_SetVXZ	(Int TID, Int X, Int Z, Bool Bob = False)	{Return TID_SetVel(TID,	X,				TID_GetVY(TID),	Z,				False, Bob);}
+	Bool TID_SetVYZ	(Int TID, Int Y, Int Z, Bool Bob = False)	{Return TID_SetVel(TID,	TID_GetVX(TID),	Y,				Z,				False, Bob);}
+	
+	Bool TID_AddVX	(Int TID, Int X, Bool Bob = False)			{Return TID_SetVel(TID,	X,	0,	0,	True, Bob);}
+	Bool TID_AddVY	(Int TID, Int Y, Bool Bob = False)			{Return TID_SetVel(TID,	0,	Y,	0,	True, Bob);}
+	Bool TID_AddVZ	(Int TID, Int Z, Bool Bob = False)			{Return TID_SetVel(TID,	0,	0,	Z,	True, Bob);}
+	Bool TID_AddVXY	(Int TID, Int X, Int Y, Bool Bob = False)	{Return TID_SetVel(TID,	X,	Y,	0,	True, Bob);}
+	Bool TID_AddVXZ	(Int TID, Int X, Int Z, Bool Bob = False)	{Return TID_SetVel(TID,	X,	0,	Z,	True, Bob);}
+	Bool TID_AddVYZ	(Int TID, Int Y, Int Z, Bool Bob = False)	{Return TID_SetVel(TID,	0,	Y,	Z,	True, Bob);}
+}
