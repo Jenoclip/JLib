@@ -12,7 +12,7 @@ JLib is an open-source ACS library based on [Zt-BCC](https://github.com/zeta-gro
 
 #### JCommon.acs
 - Creating vectors (2D, 3D, 4D)
-- Global variables (MaxPNum etc)
+- Global variables (MaxPNum, MinPNum etc)
 
 #### JMath.acs
 - Rotating 3D and 2D points by all 3 axes
@@ -21,10 +21,13 @@ JLib is an open-source ACS library based on [Zt-BCC](https://github.com/zeta-gro
 - Extra trigonometry (Tan, Csc, Ctg etc)
 - Extra integer, fixed-point and any-number-type math functions (Bounce, Mean, Clamp, Map, HalfPoint etc)
 
+#### JWorld.acs
+- Extra TID operations (TID_SetZ, TID_SetVXY, TID_AddVYZ, TID_GetPos etc)
+
 #### JGraphic.acs
 - Different types of 3D→2D projections (and also UE 2.5 "Corona"-styled projection)
 - Virtual HUD scaling functions (FullScreenVFHUD, RatioMap, GetWndRatio, GetRatioScaling etc)
-- Color space conversions (RGBA8::To_RGB8, RGB8::From_NV3 etc)
+- Color space conversions (RGBA8::To_RGB8, RGB8::From_NV3, HSV8::To_HSVA8 etc)
 <br><br/><a name="Compatibility"></a>
 ### JLib compatibility
 #### Ports:
