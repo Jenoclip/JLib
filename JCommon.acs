@@ -1,0 +1,193 @@
+#Library		"JCommon"
+#NoCompact
+#Import			"zcommon.bcs"
+
+#ifdef __INCLUDED__
+	#error "\"JMath\" is need to be #import\'ed instead of #include\'d"
+#endif
+
+/*
+╔══════════════════════════════════╗
+║Compiled with                     ║
+║    ▀▀▀█ ▀█▀      █▀▀▄ █▀▀█ █▀▀█  ║
+║      ▄▀  █       █  █ █    █     ║
+║    ▄▀    █  ▀▀▀▀ █▀▀▄ █    █     ║
+║    █▄▄▄  █       █▄▄▀ █▄▄█ █▄▄█  ║
+╚══════════════════════════════════╝
+*/
+
+#pragma pointer_space global 0
+#Include		"libbcs.bcs"
+
+#pragma raw define on
+#pragma raw include on
+#Define JLib__Enable_Dev_Only True
+#Include		"JDefs.acs"
+#pragma raw include off
+
+Namespace GV//Global Variables
+{
+	Int MinPNum = 0;
+	Int MaxPNum = -1;
+	
+	Vec4_T* Vec4_Zero;
+	Vec3_T* Vec3_Zero;
+	Vec2_T* Vec2_Zero;
+	
+	Script JLib_Name("PlayerCount_Enter_Exec") Enter
+	{
+		Log(s:__Script__);
+		Int ActPNum = PlayerNumber();
+				If(ActPNum > MaxPNum)	{MaxPNum = ActPNum;	}
+		Else{	If(ActPNum < MinPNum)	{MinPNum = ActPNum;	}
+				Else					{Terminate;			}}
+		ACS_NAsyncCall(JLib_Name("PlayerCount_Update_Clientside"), 0, MaxPNum, MinPNum);
+	}
+
+	Script JLib_Name("PlayerCount_Leave_Exec") (Int LeavePNum) Disconnect
+	{
+		Log(s:__Script__);
+		If(MaxPNum <= LeavePNum)
+		{
+			MaxPNum = LeavePNum;
+			Do {MaxPNum -= 1;} Until (PlayerInGame(MaxPNum) || (MaxPNum < 0));
+		}
+		Else
+		{
+			If(MinPNum >= LeavePNum)
+			{
+				MinPNum = LeavePNum;
+				Do {MinPNum += 1;} Until (PlayerInGame(MinPNum) || (MaxPNum <= MinPNum));
+			}
+			Else{Terminate;}
+		}
+		
+		ACS_NAsyncCall(JLib_Name("PlayerCount_Update_Clientside"), 0, MaxPNum, MinPNum);
+	}
+
+	Script JLib_Name("PlayerCount_Update_Clientside") (Int MaxPN, Int MinPN) Clientside
+	{
+		Log(s:__Script__);
+		MaxPNum = MaxPN;
+		MinPNum = MinPN;
+	}
+}
+
+
+
+
+Struct Vec4_T
+{
+	Num_	X;
+	Num_	Y;
+	Num_	Z;
+	Num_	W;
+};
+#LibDefine	Vec4_Size 4
+#Define		V4___Size 4
+
+Vec4_T* Vec4_C(Num_ pX, Num_ pY, Num_ pZ, Num_ pW)
+{
+	Vec4_T* Output;
+	Output = BCS::MAlloc(V4___Size);
+	Output.X = pX;
+	Output.Y = pY;
+	Output.Z = pZ;
+	Output.W = pW;
+	
+	Return Output;
+}
+
+Void Vec4_Set(Vec4_T* V4, Num_ pX, Num_ pY, Num_ pZ, Num_ pW)
+{
+	V4.X = pX;
+	V4.Y = pY;
+	V4.Z = pZ;
+	V4.W = pW;
+}
+
+
+
+
+Struct Vec3_T
+{
+	Num_	X;
+	Num_	Y;
+	Num_	Z;
+};
+#LibDefine	Vec3_Size 3
+#Define		V3___Size 3
+
+Vec3_T* Vec3_C(Num_ pX, Num_ pY, Num_ pZ)
+{
+	Vec3_T* Output;
+	Output = BCS::MAlloc(V3___Size);
+	Output.X = pX;
+	Output.Y = pY;
+	Output.Z = pZ;
+	
+	Return Output;
+}
+
+Void Vec3_Set(Vec3_T* V3, Num_ pX, Num_ pY, Num_ pZ)
+{
+	V3.X = pX;
+	V3.Y = pY;
+	V3.Z = pZ;
+}
+
+
+
+
+Struct Vec2_T
+{
+	Num_	X;
+	Num_	Y;
+};
+#LibDefine	Vec2_Size 2
+#Define		V2___Size 2
+
+Vec2_T* Vec2_C(Num_ pX, Num_ pY)
+{
+	Vec2_T* Output;
+	Output = BCS::MAlloc(V2___Size);
+	Output.X = pX;
+	Output.Y = pY;
+	
+	Return Output;
+}
+
+Void Vec2_Set(Vec2_T* V3, Num_ pX, Num_ pY)
+{
+	V3.X = pX;
+	V3.Y = pY;
+}
+
+
+
+
+Internal Void[]* __FreePtr_Ptr;
+Void[]* AutoFree(Void[]* Ptr)
+{
+	__FreePtr_Ptr = Ptr;
+	ACS_NResCall(JLib_Name("FreePtr"));
+	Return Ptr;
+}
+
+Script JLib_Name("FreePtr")
+{
+	Void[]* Ptr = __FreePtr_Ptr;
+	If(Ptr != Null)
+	{
+		Delay(1);
+		BCS::Free(Ptr);
+	}
+}
+
+Script JLib_Name("JCommon__Init") Open
+{
+	Log(s:__Script__);
+	GV::Vec4_Zero = Vec4_C(0, 0, 0, 0);
+	GV::Vec3_Zero = Vec3_C(0, 0, 0);
+	GV::Vec2_Zero = Vec2_C(0, 0);
+}
