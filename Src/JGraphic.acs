@@ -1218,7 +1218,7 @@ Namespace Graphics
 
 		If(_Tmp::V3_0.X <= 0)		{Return;}
 
-		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
 
 		dX = FxM(VFHUD.X, Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z));
 		dY = FxM(VFHUD.Y, Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z));
@@ -1264,7 +1264,7 @@ Namespace Graphics
 
 		If(_Tmp::V3_0.X <= 0)		{Return;}
 
-		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
 
 		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
 		Fixed HUDYSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
@@ -1341,7 +1341,7 @@ Namespace Graphics
 
 		If(_Tmp::V3_0.X <= 0)		{Return;}
 
-		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
 
 		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
 		Fixed HUDYSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
@@ -1415,7 +1415,7 @@ Namespace Graphics
 
 		If(_Tmp::V3_0.X <= 0)		{Return;}
 
-		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
 
 		dX = FxM(VFHUD.X, Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z));
 		dY = FxM(VFHUD.Y, Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z));
@@ -1460,7 +1460,7 @@ Namespace Graphics
 
 		If(_Tmp::V3_0.X <= 0)		{Return;}
 
-		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
 
 		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
 		Fixed HUDYSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
@@ -1536,7 +1536,7 @@ Namespace Graphics
 
 		If(_Tmp::V3_0.X <= 0)		{Return;}
 
-		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
 
 		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
 		Fixed HUDYSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
@@ -1611,7 +1611,7 @@ Namespace Graphics
 
 		If(_Tmp::V3_0.X <= 0)		{Return;}
 
-		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
 
 		dX = FxM(VFHUD.X, Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z));
 		dY = FxM(VFHUD.Y, Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z));
@@ -1658,7 +1658,7 @@ Namespace Graphics
 
 		If(_Tmp::V3_0.X <= 0)		{Return;}
 
-		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
 
 		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
 		Fixed HUDYSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
@@ -1736,7 +1736,7 @@ Namespace Graphics
 
 		If(_Tmp::V3_0.X <= 0)		{Return;}
 
-		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
 
 		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
 		Fixed HUDYSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
@@ -1822,7 +1822,7 @@ Namespace Graphics
 
 		If(_Tmp::V3_0.X <= 0)		{Return;}
 
-		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
 
 		dX = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
 		dY = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
@@ -1877,7 +1877,7 @@ Namespace Graphics
 
 		If(_Tmp::V3_0.X <= 0)		{Return;}
 
-		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
 
 		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
 		Fixed HUDYSize = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
@@ -1960,7 +1960,7 @@ Namespace Graphics
 
 		If(_Tmp::V3_0.X <= 0)		{Return;}
 
-		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
 
 		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
 		Fixed HUDYSize = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
@@ -2040,7 +2040,7 @@ Namespace Graphics
 
 		If(_Tmp::V3_0.X <= 0)		{Return;}
 
-		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
 
 		dX = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
 		dY = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
@@ -2094,7 +2094,7 @@ Namespace Graphics
 
 		If(_Tmp::V3_0.X <= 0)		{Return;}
 
-		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
 
 		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
 		Fixed HUDYSize = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
@@ -2176,7 +2176,7 @@ Namespace Graphics
 
 		If(_Tmp::V3_0.X <= 0)		{Return;}
 
-		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
 
 		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
 		Fixed HUDYSize = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
@@ -2257,7 +2257,7 @@ Namespace Graphics
 
 		If(_Tmp::V3_0.X <= 0)		{Return;}
 
-		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
 
 		dX = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
 		dY = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
@@ -2313,7 +2313,7 @@ Namespace Graphics
 
 		If(_Tmp::V3_0.X <= 0)		{Return;}
 
-		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
 
 		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
 		Fixed HUDYSize = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
@@ -2397,7 +2397,7 @@ Namespace Graphics
 
 		If(_Tmp::V3_0.X <= 0)		{Return;}
 
-		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
 
 		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
 		Fixed HUDYSize = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
@@ -2485,7 +2485,7 @@ Namespace Graphics
 
 		If(_Tmp::V3_0.X <= 0)		{Return;}
 
-		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
 
 		dX = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
 		dY = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
@@ -2541,7 +2541,7 @@ Namespace Graphics
 
 		If(_Tmp::V3_0.X <= 0)		{Return;}
 
-		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
 
 		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
 		Fixed HUDYSize = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
@@ -2625,7 +2625,7 @@ Namespace Graphics
 
 		If(_Tmp::V3_0.X <= 0)		{Return;}
 
-		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
 
 		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
 		Fixed HUDYSize = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
@@ -2706,7 +2706,7 @@ Namespace Graphics
 
 		If(_Tmp::V3_0.X <= 0)		{Return;}
 
-		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
 
 		dX = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
 		dY = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
@@ -2761,7 +2761,7 @@ Namespace Graphics
 
 		If(_Tmp::V3_0.X <= 0)		{Return;}
 
-		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
 
 		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
 		Fixed HUDYSize = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
@@ -2844,7 +2844,7 @@ Namespace Graphics
 
 		If(_Tmp::V3_0.X <= 0)		{Return;}
 
-		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
 
 		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
 		Fixed HUDYSize = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
@@ -2926,7 +2926,7 @@ Namespace Graphics
 
 		If(_Tmp::V3_0.X <= 0)		{Return;}
 
-		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
 
 		dX = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
 		dY = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
@@ -2983,7 +2983,7 @@ Namespace Graphics
 
 		If(_Tmp::V3_0.X <= 0)		{Return;}
 
-		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
 
 		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
 		Fixed HUDYSize = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
@@ -3068,7 +3068,7 @@ Namespace Graphics
 
 		If(_Tmp::V3_0.X <= 0)		{Return;}
 
-		If(Dst == 0) {Dst = Math::Distance3D(dX, dY, dZ);}
+		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
 
 		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
 		Fixed HUDYSize = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);

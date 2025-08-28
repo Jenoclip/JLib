@@ -48,6 +48,27 @@
 #Define	Int32_Max		0x7FFFFFFF
 
 
+#ifndef Disable_MathConstants
+	#Define	MathC_Pi			205887
+	#Define	MathC_Tau			411774	//	MathC_Pi * 2
+	#Define	MathC_E				178145
+	#Define	MathC_SqRt2			92681
+	#Define	MathC_SqRt3			113511
+	#Define	MathC_CbRt2			82570
+	#Define	MathC_Phi			106039
+	#Define	MathC_Golden		106039
+	#Define	MathC_Silver		158217
+	#Define	MathC_SupGolden		96047
+	#Define	MathC_Connective	121094
+	#Define	MathC_Ln2			45426
+	#Define	MathC_Y				37828
+	#Define	MathC_Embree		46044	// Embree-Trefethen constant
+	#Define	MathC_Trefethen		46044	// Embree-Trefethen constant
+	#Define	MathC_Feigenbaum1	306000
+	#Define	MathC_Feigenbaum2	164030
+	#Define	MathC_Cahen			42166
+#endif
+
 #ifndef Disable_ShortFixedMath
 	#Define	FxM				FixedMul	//	(A*B) >> 16  (For Int64)
 	#Define	FxD				FixedDiv	//	(A << 16)/B  (For Int64)
@@ -55,21 +76,29 @@
 #endif
 
 #ifndef Disable_AltFuncNames
-	#Define	Distance2D		VectorLength
-	#Define	Atan2			VectorAngle
-	#Define Atan(X)			VectorAngle(1.0, X)
-	#Define CallMethod		ScriptCall
-	#Define	SectorWait		TagWait
-	#Define TID_Set(TID)	Thing_ChangeTID(0, TID)
-	#Define TID_Rearrange	Thing_ChangeTID
-	#Define TID_GetX		GetActorX
-	#Define TID_GetY		GetActorY
-	#Define TID_GetZ		GetActorZ
-	#Define TID_GetVX		GetActorVelX
-	#Define TID_GetVY		GetActorVelY
-	#Define TID_GetVZ		GetActorVelZ
-	#Define TID_SetPos		SetActorPosition
-	#Define TID_SetVel		SetActorVelocity
+	#Define	Distance2D			VectorLength
+	#Define	Atan2				VectorAngle
+	#Define Atan(X)				VectorAngle(1.0, X)
+	#Define CallMethod			ScriptCall
+	#Define	SectorWait			TagWait
+	
+	#Define TID_Set(TID)		Thing_ChangeTID(0, TID)
+	#Define TID_Rearrange		Thing_ChangeTID
+	#Define TID_GetX			GetActorX
+	#Define TID_GetY			GetActorY
+	#Define TID_GetZ			GetActorZ
+	#Define TID_GetVX			GetActorVelX
+	#Define TID_GetVY			GetActorVelY
+	#Define TID_GetVZ			GetActorVelZ
+	#Define TID_SetPos			SetActorPosition
+	#Define TID_SetVel			SetActorVelocity
+	
+	#Define Line_GetVar			GetLineUDMFInt
+	#Define Line_GetFloatVar	GetLineUDMFFixed
+	#Define Sector_GetVar		GetSectorUDMFInt
+	#Define Sector_GetFloatVar	GetSectorUDMFFixed
+	#Define Side_GetVar			GetSideUDMFInt
+	#Define Side_GetFloatVar	GetSideUDMFFixed
 #endif
 
 #ifndef Disable_AltIntNames
@@ -136,7 +165,7 @@
 	#Define	AnyRef_			Void[]&
 
 	#Define	DynArr_			Void[]?
-	#Define	DynPtrArr_		Void[]?
+	#Define	DynArrPtr_		Void[]*
 #endif
 
 /*
@@ -185,8 +214,9 @@
 	#Define Stringize(Arg)		#Arg
 #endif
 
-#Define	JLib_Build		"27_08_2025"
-#Define	JLib_Version	0.1
+#Define	JLib_Build		"28_08_2025"
+#Define	JLib_Version	"0.1A"
+#Define	JLib_VerFixed	0.1
 
 
 #ifdef JLib__Enable_Dev_Only

@@ -118,6 +118,11 @@ Namespace MathBI//BI - Basic Input, Basic type Input, e.g no structures in input
 		Output.Y = Atan2		(pX, pY);
 		Output.Z = Atan2		(R, pZ);
 	}
+	
+	Fixed Distance3D(Fixed X, Fixed Y, Fixed Z)
+	{
+		Return Distance2D(Distance2D(X, Y), Z);
+	}
 }
 
 Namespace MathRPtr//RPtr - Return Ptr, Return PoinTeR. Init. structure and return pointer to it
@@ -459,7 +464,7 @@ Namespace Math
 		Return 					FxD(1, Sin(Ang));
 	}
 	
-	Fixed XSin_YCos(Fixed X, Fixed Y, Fixed Angle)
+	Fixed AngleSwitch(Fixed X, Fixed Y, Fixed Angle)
 	{
 		Return FxM(X, Sin(Angle)) + FxM(Y, Cos(Angle));
 	}
@@ -474,9 +479,9 @@ Namespace Math
 		Return FxM(X, Sin(Angle));
 	}
 	
-	Fixed Distance3D(Fixed X, Fixed Y, Fixed Z)
+	Fixed Distance3D(Vec3_T* V3)
 	{
-		Return Distance2D(Distance2D(X, Y), Z);
+		Return Distance2D(Distance2D(V3.X, V3.Y), V3.Z);
 	}
 	
 	Fixed Map(Fixed Val, Fixed fromMin, Fixed fromMax, Fixed toMin, Fixed toMax)
@@ -570,12 +575,12 @@ Namespace Math
 	
 	Fixed FPropMean2(Fixed Val1, Fixed Val2)
 	{
-		Return FixedSqrt(Val1 + Val2);
+		Return FixedSqrt(FxM(Val1, Val2));
 	}
 	
 	Int IPropMean2(Int Val1, Int Val2)
 	{
-		Return Sqrt(Val1 + Val2);
+		Return Sqrt(Val1 * Val2);
 	}
 	
 	
@@ -836,5 +841,5 @@ Namespace Math__NoScope//In purposes of using outside the ACS Enviroment.
 	Script "Math_FF_Atan2"	(Fixed_	X, Fixed_ Y)			{SetResultValue(Atan2(X, Y));				}
 	Script "Math_FF_Atan"	(Fixed_	X)						{SetResultValue(Atan(X));					}
 	Script "Math_FF_Dist2D" (Fixed_	X, Fixed_ Y)			{SetResultValue(Distance2D(X, Y));			}
-	Script "Math_FF_Dist3D" (Fixed_	X, Fixed_ Y, Fixed_ Z)	{SetResultValue(Math::Distance3D(X, Y, Z));	}
+	Script "Math_FF_Dist3D" (Fixed_	X, Fixed_ Y, Fixed_ Z)	{SetResultValue(MathBI::Distance3D(X, Y, Z));	}
 }
