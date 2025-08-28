@@ -1,4 +1,4 @@
-# <p align="center">𝙅𝙇𝙞𝙗</p>
+<h1 align="center">𝙅𝙇𝙞𝙗</h1>
 <p align="center"><a href="https://discord.gg/bvhM2aRPXT"><img src="https://img.shields.io/discord/1324751463531937802?style=flat&amp;logo=discord&amp;logoColor=FFFFFF&amp;label=Jenoclip&#39;s%20Doomworks&amp;labelColor=5865F2&amp;color=FFFFFF" alt="Discord"></a> <a href="https://zdoom.org/wiki/ACS"><img src="https://img.shields.io/badge/ACS-1F1F1F?style=flat&amp;label=ZDoom%20Wiki&amp;labelColor=BC001D" alt="Static Badge"></a> <a href="https://wiki.zandronum.com/ACS"><img src="https://img.shields.io/badge/ACS-FFFFFF?style=flat&amp;label=Zandronum%20Wiki&amp;labelColor=5CBD46" alt="Static Badge"></a> <a href="https://github.com/zeta-group/zt-bcc"><img src="https://img.shields.io/badge/Zt--BCC-2b3137?style=flat&amp;logo=github&amp;logoColor=fafbfc" alt="Static Badge"></a></p>
 
 JLib is an open-source ACS library based on [Zt-BCC](https://github.com/zeta-group/zt-bcc), JLib is compatible with ports based on ZDoom 2.8 and higher <sup>[(See more in: Compatibility)](#Compatibility)</sup>.
