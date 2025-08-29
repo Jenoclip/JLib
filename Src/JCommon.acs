@@ -36,7 +36,6 @@ Namespace GV//Global Variables
 	
 	Script JLib_Name("PlayerCount_Enter_Exec") Enter
 	{
-		Log(s:__Script__);
 		Int ActPNum = PlayerNumber();
 				If(ActPNum > MaxPNum)	{MaxPNum = ActPNum;	}
 		Else{	If(ActPNum < MinPNum)	{MinPNum = ActPNum;	}
@@ -46,7 +45,6 @@ Namespace GV//Global Variables
 
 	Script JLib_Name("PlayerCount_Leave_Exec") (Int LeavePNum) Disconnect
 	{
-		Log(s:__Script__);
 		If(MaxPNum <= LeavePNum)
 		{
 			MaxPNum = LeavePNum;
@@ -67,7 +65,6 @@ Namespace GV//Global Variables
 
 	Script JLib_Name("PlayerCount_Update_Clientside") (Int MaxPN, Int MinPN) Clientside
 	{
-		Log(s:__Script__);
 		MaxPNum = MaxPN;
 		MinPNum = MinPN;
 	}
@@ -186,7 +183,6 @@ Script JLib_Name("FreePtr")
 
 Script JLib_Name("JCommon__Init") Open
 {
-	Log(s:__Script__);
 	GV::Vec4_Zero = Vec4_C(0, 0, 0, 0);
 	GV::Vec3_Zero = Vec3_C(0, 0, 0);
 	GV::Vec2_Zero = Vec2_C(0, 0);

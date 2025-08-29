@@ -214,8 +214,8 @@
 	#Define Stringize(Arg)		#Arg
 #endif
 
-#Define	JLib_Build		"28_08_2025"
-#Define	JLib_Version	"0.1A"
+#Define	JLib_Build		"29_08_2025"
+#Define	JLib_Version	"0.1B"
 #Define	JLib_VerFixed	0.1
 
 

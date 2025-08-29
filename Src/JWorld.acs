@@ -13,6 +13,9 @@
 #Import			"JCommon.acs"
 #LinkLibrary	"JCommon"
 
+#Import			"JMath.acs"
+#LinkLibrary	"JMath"
+
 #ifdef __INCLUDED__
 	#error "\"JWorld\" is need to be #import\'ed instead of #include\'d"
 #endif
@@ -27,25 +30,60 @@
 ╚══════════════════════════════════╝
 */
 
-Namespace MapRPtr//RPtr - Return Ptr, Return PoinTeR. Init. structure and return pointer to it
+Internal Namespace _Tmp
 {
-	Vec3_T* TID_GetPos(Int TID)
-	{
-		Return Vec3_C(	TID_GetX(TID),
-						TID_GetY(TID),
-						TID_GetZ(TID)	);
-	}
+	Vec3_T* V3_0;
 	
-	Vec3_T* TID_GetVel(Int TID)
+	Script JLib_Name("World__Init") Open
 	{
-		Return Vec3_C(	TID_GetVX(TID),
-						TID_GetVY(TID),
-						TID_GetVZ(TID)	);
+		V3_0 = Vec3_C(0, 0, 0);
 	}
 }
 
 Namespace Map
 {
+	Enum
+	{
+		SIAF_InhRotation		= 1			,
+		SIAF_InhVelocity		= (1<<2)	,
+		SIAF_InhHeight			= (1<<3)	,
+		SIAF_InhRadius			= (1<<4)	,
+		SIAF_InhSpeed			= (1<<5)	,
+		SIAF_InhSpawnHealth		= (1<<6)	,
+		SIAF_InhHealth			= (1<<7)	,
+		SIAF_InhTarget			= (1<<8)	,
+		SIAF_InhMaster			= (1<<9)	,
+		SIAF_InhTracer			= (1<<10)	,
+		SIAF_InhActvSound		= (1<<11)	,
+		SIAF_InhAttkSound		= (1<<12)	,
+		SIAF_InhPainSound		= (1<<13)	,
+		SIAF_InhDethSound		= (1<<14)	,
+		SIAF_InhSndClass		= (1<<15)	,
+		SIAF_InhSpecies			= (1<<16)	,
+		SIAF_InhScaleX			= (1<<17)	,
+		SIAF_InhScaleY			= (1<<18)	,
+		SIAF_InhRndStyle		= (1<<19)	,
+		SIAF_InhAlpha			= (1<<20)	,
+		SIAF_InhReactTime		= (1<<21)	,
+		SIAF_InhAccuracy		= (1<<22)	,
+		SIAF_InhMeleeRange		= (1<<23)	,
+		SIAF_InhNameTag			= (1<<24)	,
+		SIAF_InhMass			= (1<<25)	,
+		SIAF_InhDmgType			= (1<<26)	,
+		SIAF_InhDmgFactor		= (1<<27)	,
+		SIAF_InhDmgMul			= (1<<28)	,
+		SIAF_InhDmgAmount		= (1<<29)	,
+		SIAF_InhFriendliness	= (1<<30)	,
+		SIAF_InhClass			= (1<<31)
+	};
+	
+	Enum
+	{
+		SIAF_IgnoreCollision	= 1			,
+		SIAF_RemoveTID			= (1<<2)	,
+		SIAF_InhPosition		= (1<<3)
+	};
+	
 	Void TID_GetPos(Int TID, Vec3_T* Output)
 	{
 		Output.X = TID_GetX(TID);
@@ -88,4 +126,207 @@ Namespace Map
 	Bool TID_AddVXY	(Int TID, Int X, Int Y, Bool Bob = False)	{Return TID_SetVel(TID,	X,	Y,	0,	True, Bob);}
 	Bool TID_AddVXZ	(Int TID, Int X, Int Z, Bool Bob = False)	{Return TID_SetVel(TID,	X,	0,	Z,	True, Bob);}
 	Bool TID_AddVYZ	(Int TID, Int Y, Int Z, Bool Bob = False)	{Return TID_SetVel(TID,	0,	Y,	Z,	True, Bob);}
+	
+	Int SpawnActor(Str ActorLiteral, Vec3_T* Pos, Int ActorTID = 0, NAng_ Angle = 0.0, Bool IgnoreCollision = True)
+	{
+		If(IgnoreCollision)
+		{
+			Return SpawnForced(ActorLiteral, Pos.X, Pos.Y, Pos.Z, ActorTID, Angle >> 8);
+		}
+		Return Spawn(ActorLiteral, Pos.X, Pos.Y, Pos.Z, ActorTID, Angle >> 8);
+	}
+	
+	Bool SpawnInheritedActor(Str NewActor, Int ParentTID, Vec3_T* Pos, Int NewActorTID, Flags_ Flags = 1, Flags_ Flags2 = 1)
+	{
+		Static Bool Spawned = False;
+		Assert(NewActorTID != 0, "In: SpawnInheritedActor\nNewActorTID (Argument 3) can't be zero!");
+		Assert((Pos != Null) || (Flags2 & SIAF_InhPosition), "In: SpawnInheritedActor\nPos (Argument 3) can't be zero!");
+		If(Flags & SIAF_InhClass) {NewActor = GetActorClass(ParentTID);}
+		If(Flags2 & SIAF_InhPosition)
+		{
+			If(Flags2 & SIAF_IgnoreCollision)	{Spawned = SpawnForced	(NewActor, TID_GetX(ParentTID), TID_GetY(ParentTID), TID_GetZ(ParentTID), NewActorTID, 0);}
+			Else								{Spawned = Spawn		(NewActor, TID_GetX(ParentTID), TID_GetY(ParentTID), TID_GetZ(ParentTID), NewActorTID, 0);}
+		}
+		Else
+		{
+			If(Flags2 & SIAF_IgnoreCollision)	{Spawned = SpawnForced	(NewActor, Pos.X, Pos.Y, Pos.Z, NewActorTID, 0);}
+			Else								{Spawned = Spawn		(NewActor, Pos.X, Pos.Y, Pos.Z, NewActorTID, 0);}
+		}
+		If(Spawned == False)				{Return False;}
+		
+		If(Flags & SIAF_InhRotation)		{	SetActorAngle(NewActorTID, GetActorAngle(ParentTID));
+												SetActorPitch(NewActorTID, GetActorPitch(ParentTID));
+												SetActorRoll (NewActorTID, GetActorRoll (ParentTID));	}
+		
+		If(Flags & SIAF_InhVelocity)		{TID_SetVel(0, TID_GetVX(ParentTID), TID_GetVY(ParentTID), TID_GetVZ(ParentTID), False, False);}
+		
+		If(Flags & SIAF_InhHeight)			{SetActorProperty(NewActorTID, APROP_Height,			GetActorProperty(ParentTID, APROP_Height));				}
+		If(Flags & SIAF_InhRadius)			{SetActorProperty(NewActorTID, APROP_Radius,			GetActorProperty(ParentTID, APROP_Radius));				}
+		If(Flags & SIAF_InhSpeed)			{SetActorProperty(NewActorTID, APROP_Speed,				GetActorProperty(ParentTID, APROP_Speed));				}
+		If(Flags & SIAF_InhSpawnHealth)		{SetActorProperty(NewActorTID, APROP_SpawnHealth,		GetActorProperty(ParentTID, APROP_SpawnHealth));		}
+		If(Flags & SIAF_InhHealth)			{SetActorProperty(NewActorTID, APROP_Health,			GetActorProperty(ParentTID, APROP_Health));				}
+		If(Flags & SIAF_InhTarget)			{ACS_NResCall("JLib_Map__Transfer_Pointers", ParentTID, NewActorTID, AAPTR_Target);								}
+		If(Flags & SIAF_InhMaster)			{ACS_NResCall("JLib_Map__Transfer_Pointers", ParentTID, NewActorTID, AAPTR_Master);								}
+		If(Flags & SIAF_InhTracer)			{ACS_NResCall("JLib_Map__Transfer_Pointers", ParentTID, NewActorTID, AAPTR_Tracer);								}
+		If(Flags & SIAF_InhActvSound)		{SetActorProperty(NewActorTID, APROP_ActiveSound,		GetActorProperty(ParentTID, APROP_ActiveSound));		}
+		If(Flags & SIAF_InhAttkSound)		{SetActorProperty(NewActorTID, APROP_AttackSound,		GetActorProperty(ParentTID, APROP_AttackSound));		}
+		If(Flags & SIAF_InhPainSound)		{SetActorProperty(NewActorTID, APROP_PainSound,			GetActorProperty(ParentTID, APROP_PainSound));			}
+		If(Flags & SIAF_InhDethSound)		{SetActorProperty(NewActorTID, APROP_DeathSound,		GetActorProperty(ParentTID, APROP_DeathSound));			}
+		If(Flags & SIAF_InhSndClass)		{SetActorProperty(NewActorTID, APROP_SoundClass,		GetActorProperty(ParentTID, APROP_SoundClass));			}
+		If(Flags & SIAF_InhSpecies)			{SetActorProperty(NewActorTID, APROP_Species,			GetActorProperty(ParentTID, APROP_Species));			}
+		If(Flags & SIAF_InhScaleX)			{SetActorProperty(NewActorTID, APROP_ScaleX,			GetActorProperty(ParentTID, APROP_ScaleX));				}
+		If(Flags & SIAF_InhScaleY)			{SetActorProperty(NewActorTID, APROP_ScaleY,			GetActorProperty(ParentTID, APROP_ScaleY));				}
+		If(Flags & SIAF_InhRndStyle)		{SetActorProperty(NewActorTID, APROP_RenderStyle,		GetActorProperty(ParentTID, APROP_RenderStyle));		}
+		If(Flags & SIAF_InhAlpha)			{SetActorProperty(NewActorTID, APROP_Alpha,				GetActorProperty(ParentTID, APROP_Alpha));				}
+		If(Flags & SIAF_InhReactTime)		{SetActorProperty(NewActorTID, APROP_ReactionTime,		GetActorProperty(ParentTID, APROP_ReactionTime));		}
+		If(Flags & SIAF_InhAccuracy)		{SetActorProperty(NewActorTID, APROP_Accuracy,			GetActorProperty(ParentTID, APROP_Accuracy));			}
+		If(Flags & SIAF_InhMeleeRange)		{SetActorProperty(NewActorTID, APROP_MeleeRange,		GetActorProperty(ParentTID, APROP_MeleeRange));			}
+		If(Flags & SIAF_InhNameTag)			{SetActorProperty(NewActorTID, APROP_NameTag,			GetActorProperty(ParentTID, APROP_NameTag));			}
+		If(Flags & SIAF_InhMass)			{SetActorProperty(NewActorTID, APROP_Mass,				GetActorProperty(ParentTID, APROP_Mass));				}
+		If(Flags & SIAF_InhDmgType)			{SetActorProperty(NewActorTID, APROP_DamageType,		GetActorProperty(ParentTID, APROP_DamageType));			}
+		If(Flags & SIAF_InhDmgFactor)		{SetActorProperty(NewActorTID, APROP_DamageFactor,		GetActorProperty(ParentTID, APROP_DamageFactor));		}
+		If(Flags & SIAF_InhDmgMul)			{SetActorProperty(NewActorTID, APROP_DamageMultiplier,	GetActorProperty(ParentTID, APROP_DamageMultiplier));	}
+		If(Flags & SIAF_InhDmgAmount)		{SetActorProperty(NewActorTID, APROP_Damage,			GetActorProperty(ParentTID, APROP_Damage));				}
+		If(Flags & SIAF_InhFriendliness)	{SetActorProperty(NewActorTID, APROP_Friendly,			GetActorProperty(ParentTID, APROP_Friendly));			}
+		
+		If(Flags2 & SIAF_RemoveTID)	{TID_Set(0);}
+		Return True;
+	}
+	
+	Script "JLib_Map__Transfer_Pointers" (Int TID_From, Int TID_To, Int APtr)
+	{
+		SetActivator(TID_To);	// <- Reason to use script instead of function.
+		SetResultValue(SetPointer(APtr, TID_From, APtr));
+	}
+	
+	Int SpawnActorEx(Str ActorLiteral, Vec3_T* Pos, Vec3_T* Offsets, Vec3_T* OffsetsRPA, Vec3_T* ActorRPA = Null, Int ActorTID = 0, Bool IgnoreCollision = True)
+	{
+		Int Output;
+		Math::RotateV3_RPA(Offsets, OffsetsRPA, _Tmp::V3_0);
+		
+		If(IgnoreCollision)	{Output = SpawnForced	(ActorLiteral, Pos.X + _Tmp::V3_0.X, Pos.Y + _Tmp::V3_0.Y, Pos.Z + _Tmp::V3_0.Z, ActorTID, 0);}
+		Else				{Output = Spawn			(ActorLiteral, Pos.X + _Tmp::V3_0.X, Pos.Y + _Tmp::V3_0.Y, Pos.Z + _Tmp::V3_0.Z, ActorTID, 0);}
+		
+		If(ActorRPA == Null){	SetActorRoll (0, OffsetsRPA.X);
+								SetActorPitch(0, OffsetsRPA.Y);
+								SetActorAngle(0, OffsetsRPA.Z);	}
+		Else				{	SetActorRoll (0, ActorRPA.X);
+								SetActorPitch(0, ActorRPA.Y);
+								SetActorAngle(0, ActorRPA.Z);	}
+		Return Output;
+	}
+}
+
+
+
+Namespace MapRPtr//RPtr - Return Ptr, Return PoinTeR. Init. structure and return pointer to it
+{
+	Vec3_T* TID_GetPos(Int TID)
+	{
+		Return Vec3_C(	TID_GetX(TID),
+						TID_GetY(TID),
+						TID_GetZ(TID)	);
+	}
+	
+	Vec3_T* TID_GetVel(Int TID)
+	{
+		Return Vec3_C(	TID_GetVX(TID),
+						TID_GetVY(TID),
+						TID_GetVZ(TID)	);
+	}
+}
+
+Namespace MapBI
+{
+	Int SpawnActor(Str ActorLiteral, Fixed X, Fixed Y, Fixed Z, Int ActorTID = 0, NAng_ Angle = 0.0, Bool IgnoreCollision = True)
+	{
+		If(IgnoreCollision)
+		{
+			Return SpawnForced(ActorLiteral, X, Y, Z, ActorTID, Angle >> 8);
+		}
+		Return Spawn(ActorLiteral, X, Y, Z, ActorTID, Angle >> 8);
+	}
+	
+	Bool SpawnInheritedActor(Str NewActor, Int ParentTID, Fixed X, Fixed Y, Fixed Z, Int NewActorTID, Flags_ Flags = 1, Flags_ Flags2 = 1)
+	{
+		Static Bool Spawned = False;
+		Assert(NewActorTID != 0, "In: SpawnInheritedActor\nNewActorTID (Argument 3) can't be zero!");
+		If(Flags & Map::SIAF_InhClass) {NewActor = GetActorClass(ParentTID);}
+		If(Flags2 & Map::SIAF_InhPosition)
+		{
+			If(Flags2 & Map::SIAF_IgnoreCollision)	{Spawned = SpawnForced	(NewActor, TID_GetX(ParentTID), TID_GetY(ParentTID), TID_GetZ(ParentTID), NewActorTID, 0);}
+			Else									{Spawned = Spawn		(NewActor, TID_GetX(ParentTID), TID_GetY(ParentTID), TID_GetZ(ParentTID), NewActorTID, 0);}
+		}
+		Else
+		{
+			If(Flags2 & Map::SIAF_IgnoreCollision)	{Spawned = SpawnForced	(NewActor, X, Y, Z, NewActorTID, 0);}
+			Else									{Spawned = Spawn		(NewActor, X, Y, Z, NewActorTID, 0);}
+		}
+		If(Spawned == False)				{Return False;}
+		
+		If(Flags & Map::SIAF_InhRotation)	{	SetActorAngle(NewActorTID, GetActorAngle(ParentTID));
+												SetActorPitch(NewActorTID, GetActorPitch(ParentTID));
+												SetActorRoll (NewActorTID, GetActorRoll (ParentTID));	}
+		
+		If(Flags & Map::SIAF_InhVelocity)		{TID_SetVel(0, TID_GetVX(ParentTID), TID_GetVY(ParentTID), TID_GetVZ(ParentTID), False, False);}
+		
+		If(Flags & Map::SIAF_InhHeight)			{SetActorProperty(NewActorTID, APROP_Height,			GetActorProperty(ParentTID, APROP_Height));				}
+		If(Flags & Map::SIAF_InhRadius)			{SetActorProperty(NewActorTID, APROP_Radius,			GetActorProperty(ParentTID, APROP_Radius));				}
+		If(Flags & Map::SIAF_InhSpeed)			{SetActorProperty(NewActorTID, APROP_Speed,				GetActorProperty(ParentTID, APROP_Speed));				}
+		If(Flags & Map::SIAF_InhSpawnHealth)	{SetActorProperty(NewActorTID, APROP_SpawnHealth,		GetActorProperty(ParentTID, APROP_SpawnHealth));		}
+		If(Flags & Map::SIAF_InhHealth)			{SetActorProperty(NewActorTID, APROP_Health,			GetActorProperty(ParentTID, APROP_Health));				}
+		If(Flags & Map::SIAF_InhTarget)			{ACS_NResCall("JLib_Map__Transfer_Pointers", ParentTID, NewActorTID, AAPTR_Target);								}
+		If(Flags & Map::SIAF_InhMaster)			{ACS_NResCall("JLib_Map__Transfer_Pointers", ParentTID, NewActorTID, AAPTR_Master);								}
+		If(Flags & Map::SIAF_InhTracer)			{ACS_NResCall("JLib_Map__Transfer_Pointers", ParentTID, NewActorTID, AAPTR_Tracer);								}
+		If(Flags & Map::SIAF_InhActvSound)		{SetActorProperty(NewActorTID, APROP_ActiveSound,		GetActorProperty(ParentTID, APROP_ActiveSound));		}
+		If(Flags & Map::SIAF_InhAttkSound)		{SetActorProperty(NewActorTID, APROP_AttackSound,		GetActorProperty(ParentTID, APROP_AttackSound));		}
+		If(Flags & Map::SIAF_InhPainSound)		{SetActorProperty(NewActorTID, APROP_PainSound,			GetActorProperty(ParentTID, APROP_PainSound));			}
+		If(Flags & Map::SIAF_InhDethSound)		{SetActorProperty(NewActorTID, APROP_DeathSound,		GetActorProperty(ParentTID, APROP_DeathSound));			}
+		If(Flags & Map::SIAF_InhSndClass)		{SetActorProperty(NewActorTID, APROP_SoundClass,		GetActorProperty(ParentTID, APROP_SoundClass));			}
+		If(Flags & Map::SIAF_InhSpecies)		{SetActorProperty(NewActorTID, APROP_Species,			GetActorProperty(ParentTID, APROP_Species));			}
+		If(Flags & Map::SIAF_InhScaleX)			{SetActorProperty(NewActorTID, APROP_ScaleX,			GetActorProperty(ParentTID, APROP_ScaleX));				}
+		If(Flags & Map::SIAF_InhScaleY)			{SetActorProperty(NewActorTID, APROP_ScaleY,			GetActorProperty(ParentTID, APROP_ScaleY));				}
+		If(Flags & Map::SIAF_InhRndStyle)		{SetActorProperty(NewActorTID, APROP_RenderStyle,		GetActorProperty(ParentTID, APROP_RenderStyle));		}
+		If(Flags & Map::SIAF_InhAlpha)			{SetActorProperty(NewActorTID, APROP_Alpha,				GetActorProperty(ParentTID, APROP_Alpha));				}
+		If(Flags & Map::SIAF_InhReactTime)		{SetActorProperty(NewActorTID, APROP_ReactionTime,		GetActorProperty(ParentTID, APROP_ReactionTime));		}
+		If(Flags & Map::SIAF_InhAccuracy)		{SetActorProperty(NewActorTID, APROP_Accuracy,			GetActorProperty(ParentTID, APROP_Accuracy));			}
+		If(Flags & Map::SIAF_InhMeleeRange)		{SetActorProperty(NewActorTID, APROP_MeleeRange,		GetActorProperty(ParentTID, APROP_MeleeRange));			}
+		If(Flags & Map::SIAF_InhNameTag)		{SetActorProperty(NewActorTID, APROP_NameTag,			GetActorProperty(ParentTID, APROP_NameTag));			}
+		If(Flags & Map::SIAF_InhMass)			{SetActorProperty(NewActorTID, APROP_Mass,				GetActorProperty(ParentTID, APROP_Mass));				}
+		If(Flags & Map::SIAF_InhDmgType)		{SetActorProperty(NewActorTID, APROP_DamageType,		GetActorProperty(ParentTID, APROP_DamageType));			}
+		If(Flags & Map::SIAF_InhDmgFactor)		{SetActorProperty(NewActorTID, APROP_DamageFactor,		GetActorProperty(ParentTID, APROP_DamageFactor));		}
+		If(Flags & Map::SIAF_InhDmgMul)			{SetActorProperty(NewActorTID, APROP_DamageMultiplier,	GetActorProperty(ParentTID, APROP_DamageMultiplier));	}
+		If(Flags & Map::SIAF_InhDmgAmount)		{SetActorProperty(NewActorTID, APROP_Damage,			GetActorProperty(ParentTID, APROP_Damage));				}
+		If(Flags & Map::SIAF_InhFriendliness)	{SetActorProperty(NewActorTID, APROP_Friendly,			GetActorProperty(ParentTID, APROP_Friendly));			}
+		
+		If(Flags2 & Map::SIAF_RemoveTID)	{TID_Set(0);}
+		Return True;
+	}
+	
+	Int SpawnActorEx
+	(
+		Str ActorLiteral,
+		Fixed PosX, Fixed PosY, Fixed PosZ,
+		Fixed OfsX, Fixed OfsY, Fixed OfsZ,
+		Fixed OfsR, Fixed OfsP, Fixed OfsA,
+		Fixed ActR, Fixed ActP, Fixed ActA,
+		Int ActorTID = 0,
+		Bool IgnoreCollision = True,
+		Bool UseOfsRPA_As_ActRPA = True
+	)
+	{
+		Int Output;
+		MathBI::RotateV3_RPA(OfsX, OfsY, OfsZ, OfsR, OfsP, OfsA, _Tmp::V3_0);
+		
+		If(IgnoreCollision)	{Output = SpawnForced	(ActorLiteral, PosX + _Tmp::V3_0.X, PosY + _Tmp::V3_0.Y, PosZ + _Tmp::V3_0.Z, ActorTID, 0);}
+		Else				{Output = Spawn			(ActorLiteral, PosX + _Tmp::V3_0.X, PosY + _Tmp::V3_0.Y, PosZ + _Tmp::V3_0.Z, ActorTID, 0);}
+		
+		If(UseOfsRPA_As_ActRPA)	{	SetActorRoll (0, OfsR);
+									SetActorPitch(0, OfsP);
+									SetActorAngle(0, OfsA);	}
+		Else					{	SetActorRoll (0, ActR);
+									SetActorPitch(0, ActP);
+									SetActorAngle(0, ActA);	}
+		Return Output;
+	}
 }

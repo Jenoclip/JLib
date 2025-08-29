@@ -39,16 +39,19 @@ Namespace MathBI//BI - Basic Input, Basic type Input, e.g no structures in input
 	{
 		If(!Output)	{Return;}
 		
+		Fixed CosR = Cos(pR);	Fixed SinR = Sin(pR);
+		Fixed CosP = Cos(pP);	Fixed SinP = Sin(pP);
+		Fixed CosA = Cos(pA);	Fixed SinA = Sin(pA);
 		Fixed xY, xZ, rX, rY, rZ;
 		
-		xY = FxM(pY, Cos(pR)) + FxM(pZ, Sin(-pR));
-		xZ = FxM(pY, Sin(pR)) + FxM(pZ, Cos(pR));
+		xY = FxM(pY, CosR)	+ FxM(pZ, -SinR);
+		xZ = FxM(pY, SinR)	+ FxM(pZ, CosR);
 		
-		rZ = FxM(xZ, Cos(-pP)) + FxM(pX, Sin(-pP));
-		rX = FxM(xZ, Sin(pP)) + FxM(pX, Cos(pP));
+		rZ = FxM(xZ, CosP)	+ FxM(pX, -SinP);
+		rX = FxM(xZ, SinP)	+ FxM(pX, CosP);
 		
-		rY = FxM(xY, Cos(pA)) + FxM(rX, Sin(pA));
-		rX = FxM(xY, Sin(-pA)) + FxM(rX, Cos(pA));
+		rY = FxM(xY, CosA)	+ FxM(rX, SinA);
+		rX = FxM(xY, -SinA)	+ FxM(rX, CosA);
 		
 		Output.X = rX;
 		Output.Y = rY;
@@ -63,13 +66,16 @@ Namespace MathBI//BI - Basic Input, Basic type Input, e.g no structures in input
 	)
 	{
 		If(!Output)	{Return;}
+		
+		Fixed CosP = Cos(pP);	Fixed SinP = Sin(pP);
+		Fixed CosA = Cos(pA);	Fixed SinA = Sin(pA);
 		Fixed rX, rY, rZ;
 		
-		rZ = FxM(pZ, Cos(-pP)) + FxM(pX, Sin(-pP));
-		rX = FxM(pZ, Sin(pP)) + FxM(pX, Cos(pP));
+		rZ = FxM(pZ, CosP)	+ FxM(pX, -SinP);
+		rX = FxM(pZ, SinP)	+ FxM(pX, CosP);
 		
-		rY = FxM(pY, Cos(pA)) + FxM(rX, Sin(pA));
-		rX = FxM(pY, Sin(-pA)) + FxM(rX, Cos(pA));
+		rY = FxM(pY, CosA)	+ FxM(rX, SinA);
+		rX = FxM(pY, -SinA)	+ FxM(rX, CosA);
 		
 		Output.X = rX;
 		Output.Y = rY;
@@ -79,14 +85,16 @@ Namespace MathBI//BI - Basic Input, Basic type Input, e.g no structures in input
 	Void RotateV3_A
 	(
 		Fixed pX, Fixed pY, Fixed pZ,
-		Fixed A,
+		Fixed pA,
 		Vec3_T* Output
 	)//A - Angle
 	{
 		If(!Output)	{Return;}
 		
-		Output.X = FxM(pX, Cos(A)) + FxM(pY, Sin(A));
-		Output.Y = FxM(pX, Sin(-A)) + FxM(pY, Cos(A));
+		Fixed CosA = Cos(pA);	Fixed SinA = Sin(pA);
+		
+		Output.X = FxM(pX, CosA)	+ FxM(pY, SinA);
+		Output.Y = FxM(pX, -SinA)	+ FxM(pY, CosA);
 		Output.Z = pZ;
 	}
 	
@@ -98,9 +106,11 @@ Namespace MathBI//BI - Basic Input, Basic type Input, e.g no structures in input
 	{
 		If(!Output)	{Return;}
 		
-		Output.X = FxM(	Cos(pP),
+		Fixed CosP = Cos(pP);
+		
+		Output.X = FxM(	CosP,
 						FxM(Cos(pA), pR)	);
-		Output.Y = FxM(	Cos(pP),
+		Output.Y = FxM(	CosP,
 						FxM(Sin(pA), pR)	);
 		Output.Z = FxM(   Sin(-pP), pR	);
 	}
@@ -129,45 +139,52 @@ Namespace MathRPtr//RPtr - Return Ptr, Return PoinTeR. Init. structure and retur
 {
 	Vec3_T* RotateV3_RPA(Vec3_T* V3, Vec3_T* RPA)//RPA - Roll, Pitch, Angle
 	{
+		Fixed CosR = Cos(RPA.X);	Fixed SinR = Sin(RPA.X);
+		Fixed CosP = Cos(RPA.Y);	Fixed SinP = Sin(RPA.Y);
+		Fixed CosA = Cos(RPA.Z);	Fixed SinA = Sin(RPA.Z);
 		Fixed xY, xZ, rX, rY, rZ;
 		
-		xY = FxM(V3.Y, Cos(RPA.X)) + FxM(V3.Z, Sin(-RPA.X));
-		xZ = FxM(V3.Y, Sin(RPA.X)) + FxM(V3.Z, Cos(RPA.X));
+		xY = FxM(V3.Y, CosR)	+ FxM(V3.Z, -SinR);
+		xZ = FxM(V3.Y, SinR)	+ FxM(V3.Z, CosR);
 		
-		rZ = FxM(xZ, Cos(-RPA.Y)) + FxM(V3.X, Sin(-RPA.Y));
-		rX = FxM(xZ, Sin(RPA.Y)) + FxM(V3.X, Cos(RPA.Y));
+		rZ = FxM(xZ, CosP)		+ FxM(V3.X, -SinP);
+		rX = FxM(xZ, SinP)		+ FxM(V3.X, CosP);
 		
-		rY = FxM(xY, Cos(RPA.Z)) + FxM(rX, Sin(RPA.Z));
-		rX = FxM(xY, Sin(-RPA.Z)) + FxM(rX, Cos(RPA.Z));
+		rY = FxM(xY, CosA)		+ FxM(rX, SinA);
+		rX = FxM(xY, -SinA)		+ FxM(rX, CosA);
 		
 		Return Vec3_C(rX, rY, rZ);
 	}
 	
 	Vec3_T* RotateV3_PA(Vec3_T* V3, Vec2_T* PA)//PA - Pitch, Angle
 	{
+		Fixed CosP = Cos(PA.X);	Fixed SinP = Sin(PA.X);
+		Fixed CosA = Cos(PA.Y);	Fixed SinA = Sin(PA.Y);
 		Fixed rX, rY, rZ;
 		
-		rZ = FxM(V3.Z, Cos(-PA.X)) + FxM(V3.X, Sin(-PA.X));
-		rX = FxM(V3.Z, Sin(PA.X)) + FxM(V3.X, Cos(PA.X));
+		rZ = FxM(V3.Z, CosP)	+ FxM(V3.X, -SinP);
+		rX = FxM(V3.Z, SinP)	+ FxM(V3.X, CosP);
 		
-		rY = FxM(V3.Y, Cos(PA.Y)) + FxM(rX, Sin(PA.Y));
-		rX = FxM(V3.Y, Sin(-PA.Y)) + FxM(rX, Cos(PA.Y));
+		rY = FxM(V3.Y, CosA)	+ FxM(rX, SinA);
+		rX = FxM(V3.Y, -SinA)	+ FxM(rX, CosA);
 		
 		Return Vec3_C(rX, rY, rZ);
 	}
 	
 	Vec3_T* RotateV3_A(Vec3_T* V3, Fixed A)//A - Angle
 	{
-		Return Vec3_C(	FxM(V3.X, Cos(A)) + FxM(V3.Y, Sin(A)),
-						FxM(V3.X, Sin(-A)) + FxM(V3.Y, Cos(A)),
+		Fixed CosA = Cos(A);	Fixed SinA = Sin(A);
+		Return Vec3_C(	FxM(V3.X, CosA)		+ FxM(V3.Y, SinA),
+						FxM(V3.X, -SinA)	+ FxM(V3.Y, CosA),
 						V3.Z									);
 	}
 	
 	Vec3_T* RAP_To_XYZ(Vec3_T* RAP)//RAP - Polar coordinates, {Radius, Angle, Pitch}
-	{		
-		Return Vec3_C(	FxM(	Cos(RAP.Z),
+	{
+		Fixed CosP = Cos(RAP.Z);
+		Return Vec3_C(	FxM(	CosP,
 							FxM(Cos(RAP.Y), RAP.X)	),
-						FxM(	Cos(RAP.Z),
+						FxM(	CosP,
 							FxM(Sin(RAP.Y), RAP.X)	),
 						FxM(   Sin(-RAP.Z), RAP.X	)	);
 	}
@@ -354,16 +371,19 @@ Namespace Math
 	{
 		If(!Output)	{Return;}
 		
+		Fixed CosR	= Cos(pR);		Fixed SinNR	= Sin(-pR);
+		Fixed CosP	= Cos(pP);		Fixed SinP	= Sin(pP) ;
+		Fixed CosA	= Cos(pA);		Fixed SinNA	= Sin(-pA);
 		Fixed tX, tY, rX, rY, rZ;
 
-		tX = FxM(pX, Cos(-pA)) - FxM(pY, Sin(-pA));
-		tY = FxM(pX, Sin(-pA)) + FxM(pY, Cos(-pA));
+		tX = FxM(pX, CosA)	- FxM(pY, SinNA);
+		tY = FxM(pX, SinNA)	+ FxM(pY, CosA);
 		
-		rX = FxM(tX, Cos(pP)) - FxM(pZ, Sin(pP));
-		rZ = FxM(tX, Sin(pP)) + FxM(pZ, Cos(pP));
+		rX = FxM(tX, CosP)	- FxM(pZ, SinP);
+		rZ = FxM(tX, SinP)	+ FxM(pZ, CosP);
 		
-		rY = FxM(tY, Cos(-pR)) - FxM(rZ, Sin(-pR));
-		rZ = FxM(tY, Sin(-pR)) + FxM(rZ, Cos(-pR));
+		rY = FxM(tY, CosR)	- FxM(rZ, SinNR);
+		rZ = FxM(tY, SinNR)	+ FxM(rZ, CosR);
 		
 		Output.X = rX;
 		Output.Y = rY;
@@ -374,16 +394,19 @@ Namespace Math
 	{
 		If(!Output)	{Return;}
 		
+		Fixed CosR = Cos(RPA.X);	Fixed SinR = Sin(RPA.X);
+		Fixed CosP = Cos(RPA.Y);	Fixed SinP = Sin(RPA.Y);
+		Fixed CosA = Cos(RPA.Z);	Fixed SinA = Sin(RPA.Z);
 		Fixed xY, xZ, rX, rY, rZ;
 		
-		xY = FxM(V3.Y, Cos(RPA.X)) + FxM(V3.Z, Sin(-RPA.X));
-		xZ = FxM(V3.Y, Sin(RPA.X)) + FxM(V3.Z, Cos(RPA.X));
+		xY = FxM(V3.Y, CosR)	+ FxM(V3.Z, -SinR);
+		xZ = FxM(V3.Y, SinR)	+ FxM(V3.Z, CosR);
 		
-		rZ = FxM(xZ, Cos(-RPA.Y)) + FxM(V3.X, Sin(-RPA.Y));
-		rX = FxM(xZ, Sin(RPA.Y)) + FxM(V3.X, Cos(RPA.Y));
+		rZ = FxM(xZ, CosP)		+ FxM(V3.X, -SinP);
+		rX = FxM(xZ, SinP)		+ FxM(V3.X, CosP);
 		
-		rY = FxM(xY, Cos(RPA.Z)) + FxM(rX, Sin(RPA.Z));
-		rX = FxM(xY, Sin(-RPA.Z)) + FxM(rX, Cos(RPA.Z));
+		rY = FxM(xY, CosA)		+ FxM(rX, SinA);
+		rX = FxM(xY, -SinA)		+ FxM(rX, CosA);
 		
 		Output.X = rX;
 		Output.Y = rY;
@@ -393,13 +416,16 @@ Namespace Math
 	Void RotateV3_PA(Vec3_T* V3, Vec2_T* PA, Vec3_T* Output)//PA - Pitch, Angle
 	{
 		If(!Output)	{Return;}
+		
+		Fixed CosP = Cos(PA.X);	Fixed SinP = Sin(PA.X);
+		Fixed CosA = Cos(PA.Y);	Fixed SinA = Sin(PA.Y);
 		Fixed rX, rY, rZ;
 		
-		rZ = FxM(V3.Z, Cos(-PA.X)) + FxM(V3.X, Sin(-PA.X));
-		rX = FxM(V3.Z, Sin(PA.X)) + FxM(V3.X, Cos(PA.X));
+		rZ = FxM(V3.Z, CosP)	+ FxM(V3.X, -SinP);
+		rX = FxM(V3.Z, SinP)	+ FxM(V3.X, CosP);
 		
-		rY = FxM(V3.Y, Cos(PA.Y)) + FxM(rX, Sin(PA.Y));
-		rX = FxM(V3.Y, Sin(-PA.Y)) + FxM(rX, Cos(PA.Y));
+		rY = FxM(V3.Y, CosA)	+ FxM(rX, SinA);
+		rX = FxM(V3.Y, -SinA)	+ FxM(rX, CosA);
 		
 		Output.X = rX;
 		Output.Y = rY;
@@ -410,8 +436,10 @@ Namespace Math
 	{
 		If(!Output)	{Return;}
 		
-		Output.X = FxM(V3.X, Cos(A)) + FxM(V3.Y, Sin(A));
-		Output.Y = FxM(V3.X, Sin(-A)) + FxM(V3.Y, Cos(A));
+		Fixed CosA = Cos(A);	Fixed SinA = Sin(A);
+		
+		Output.X = FxM(V3.X, CosA)	+ FxM(V3.Y, SinA);
+		Output.Y = FxM(V3.X, -SinA)	+ FxM(V3.Y, CosA);
 		Output.Z = V3.Z;
 	}
 	
@@ -419,9 +447,11 @@ Namespace Math
 	{
 		If(!Output)	{Return;}
 		
-		Output.X = FxM(	Cos(RAP.Z),
+		Fixed CosP = Cos(RAP.Z);
+		
+		Output.X = FxM(	CosP,
 						FxM(Cos(RAP.Y), RAP.X)	);
-		Output.Y = FxM(	Cos(RAP.Z),
+		Output.Y = FxM(	CosP,
 						FxM(Sin(RAP.Y), RAP.X)	);
 		Output.Z = FxM(	Sin(-RAP.Z), RAP.X		);
 	}

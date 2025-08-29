@@ -36,7 +36,6 @@ Internal Namespace _Tmp
 	
 	Script JLib_Name("Graphics__Init") Open
 	{
-		Log(s:__Script__);
 		V3_0 = Vec3_C(0, 0, 0);
 	}
 }
