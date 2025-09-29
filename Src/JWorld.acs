@@ -138,7 +138,7 @@ Namespace Map
 	
 	Bool SpawnInheritedActor(Str NewActor, Int ParentTID, Vec3_T* Pos, Int NewActorTID, Flags_ Flags = 1, Flags_ Flags2 = 1)
 	{
-		Static Bool Spawned = False;
+		Bool Spawned = False;
 		Assert(NewActorTID != 0, "In: SpawnInheritedActor\nNewActorTID (Argument 3) can't be zero!");
 		Assert((Pos != Null) || (Flags2 & SIAF_InhPosition), "In: SpawnInheritedActor\nPos (Argument 3) can't be zero!");
 		If(Flags & SIAF_InhClass) {NewActor = GetActorClass(ParentTID);}
@@ -189,30 +189,66 @@ Namespace Map
 		If(Flags & SIAF_InhDmgAmount)		{SetActorProperty(NewActorTID, APROP_Damage,			GetActorProperty(ParentTID, APROP_Damage));				}
 		If(Flags & SIAF_InhFriendliness)	{SetActorProperty(NewActorTID, APROP_Friendly,			GetActorProperty(ParentTID, APROP_Friendly));			}
 		
-		If(Flags2 & SIAF_RemoveTID)	{TID_Set(0);}
+		If(Flags2 & SIAF_RemoveTID)	{TID_Rearrange(NewActorTID, 0);}
 		Return True;
 	}
 	
-	Script "JLib_Map__Transfer_Pointers" (Int TID_From, Int TID_To, Int APtr)
+	Script "JLib_Map__Transfer_Pointers" (Int TID_Get, Int TID_Set, Int APtr)
 	{
-		SetActivator(TID_To);	// <- Reason to use script instead of function.
-		SetResultValue(SetPointer(APtr, TID_From, APtr));
+		SetActivator(TID_Set);	// <- Reason to use script instead of function.
+		SetResultValue(SetPointer(APtr, TID_Get, APtr));
 	}
 	
-	Int SpawnActorEx(Str ActorLiteral, Vec3_T* Pos, Vec3_T* Offsets, Vec3_T* OffsetsRPA, Vec3_T* ActorRPA = Null, Int ActorTID = 0, Bool IgnoreCollision = True)
+	Script "JLib_Map__Set_Pointer" (Int TID_Get, Int TID_Set, Int APtr_Set, Int APtr_Get)
+	{
+		SetActivator(TID_Set);	// <- Reason to use script instead of function.
+		SetResultValue(SetPointer(APtr_Set, TID_Get, APtr_Get));
+	}
+	
+	Script "JLib_Map__Set_Pointer_TID" (Int TID_Get, Int TID_Set, Int APtr_Set)
+	{
+		SetActivator(TID_Set);	// <- Reason to use script instead of function.
+		SetResultValue(SetPointer(APtr_Set, TID_Get));
+	}
+	
+	Int SpawnActorEx(Str ActorLiteral, Vec3_T* Pos, Vec3_T* Offsets, Vec3_T* OffsetsRPA, Vec3_T* ActorRPA = Null, Int ActorTID = 0, Bool IgnoreCollision = True, Vec3_T* ActorPos = Null)
 	{
 		Int Output;
 		Math::RotateV3_RPA(Offsets, OffsetsRPA, _Tmp::V3_0);
+		Int X = Pos.X + _Tmp::V3_0.X;
+		Int Y = Pos.Y + _Tmp::V3_0.Y;
+		Int Z = Pos.Z + _Tmp::V3_0.Z;
 		
-		If(IgnoreCollision)	{Output = SpawnForced	(ActorLiteral, Pos.X + _Tmp::V3_0.X, Pos.Y + _Tmp::V3_0.Y, Pos.Z + _Tmp::V3_0.Z, ActorTID, 0);}
-		Else				{Output = Spawn			(ActorLiteral, Pos.X + _Tmp::V3_0.X, Pos.Y + _Tmp::V3_0.Y, Pos.Z + _Tmp::V3_0.Z, ActorTID, 0);}
+		If(ActorPos != Null){ActorPos.X = X; ActorPos.Y = Y; ActorPos.Z = Z;}
+		If(IgnoreCollision)	{Output = SpawnForced	(ActorLiteral, X, Y, Z, ActorTID, 0);}
+		Else				{Output = Spawn			(ActorLiteral, X, Y, Z, ActorTID, 0);}
 		
-		If(ActorRPA == Null){	SetActorRoll (0, OffsetsRPA.X);
-								SetActorPitch(0, OffsetsRPA.Y);
-								SetActorAngle(0, OffsetsRPA.Z);	}
-		Else				{	SetActorRoll (0, ActorRPA.X);
-								SetActorPitch(0, ActorRPA.Y);
-								SetActorAngle(0, ActorRPA.Z);	}
+		If(ActorRPA == Null){	SetActorRoll (ActorTID, OffsetsRPA.X);
+								SetActorPitch(ActorTID, OffsetsRPA.Y);
+								SetActorAngle(ActorTID, OffsetsRPA.Z);	}
+		Else				{	SetActorRoll (ActorTID, ActorRPA.X);
+								SetActorPitch(ActorTID, ActorRPA.Y);
+								SetActorAngle(ActorTID, ActorRPA.Z);	}
+		Return Output;
+	}
+	
+	Bool PosActorEx(Int TID, Vec3_T* Pos, Vec3_T* Offsets, Vec3_T* OffsetsRPA, Bool Rotate = False)
+	{
+		Int Output;
+		Math::RotateV3_RPA(Offsets, OffsetsRPA, _Tmp::V3_0);
+		Int X = Pos.X + _Tmp::V3_0.X;
+		Int Y = Pos.Y + _Tmp::V3_0.Y;
+		Int Z = Pos.Z + _Tmp::V3_0.Z;
+		
+		Output = SetActorPosition(TID, X, Y, Z, False);
+		
+		If(Rotate)
+		{
+			SetActorRoll (TID, OffsetsRPA.X);
+			SetActorPitch(TID, OffsetsRPA.Y);
+			SetActorAngle(TID, OffsetsRPA.Z);
+		}
+		
 		Return Output;
 	}
 }
@@ -249,7 +285,7 @@ Namespace MapBI
 	
 	Bool SpawnInheritedActor(Str NewActor, Int ParentTID, Fixed X, Fixed Y, Fixed Z, Int NewActorTID, Flags_ Flags = 1, Flags_ Flags2 = 1)
 	{
-		Static Bool Spawned = False;
+		Bool Spawned = False;
 		Assert(NewActorTID != 0, "In: SpawnInheritedActor\nNewActorTID (Argument 3) can't be zero!");
 		If(Flags & Map::SIAF_InhClass) {NewActor = GetActorClass(ParentTID);}
 		If(Flags2 & Map::SIAF_InhPosition)
@@ -312,21 +348,53 @@ Namespace MapBI
 		Fixed ActR, Fixed ActP, Fixed ActA,
 		Int ActorTID = 0,
 		Bool IgnoreCollision = True,
-		Bool UseOfsRPA_As_ActRPA = True
+		Bool UseOfsRPA_As_ActRPA = True,
+		Vec3_T* ActorPos = Null
 	)
 	{
 		Int Output;
 		MathBI::RotateV3_RPA(OfsX, OfsY, OfsZ, OfsR, OfsP, OfsA, _Tmp::V3_0);
+		Int X = PosX + _Tmp::V3_0.X;
+		Int Y = PosY + _Tmp::V3_0.Y;
+		Int Z = PosZ + _Tmp::V3_0.Z;
 		
-		If(IgnoreCollision)	{Output = SpawnForced	(ActorLiteral, PosX + _Tmp::V3_0.X, PosY + _Tmp::V3_0.Y, PosZ + _Tmp::V3_0.Z, ActorTID, 0);}
-		Else				{Output = Spawn			(ActorLiteral, PosX + _Tmp::V3_0.X, PosY + _Tmp::V3_0.Y, PosZ + _Tmp::V3_0.Z, ActorTID, 0);}
+		If(ActorPos != Null){ActorPos.X = X; ActorPos.Y = Y; ActorPos.Z = Z;}
+		If(IgnoreCollision)	{Output = SpawnForced	(ActorLiteral, X, Y, Z, ActorTID, 0);}
+		Else				{Output = Spawn			(ActorLiteral, X, Y, Z, ActorTID, 0);}
 		
-		If(UseOfsRPA_As_ActRPA)	{	SetActorRoll (0, OfsR);
-									SetActorPitch(0, OfsP);
-									SetActorAngle(0, OfsA);	}
-		Else					{	SetActorRoll (0, ActR);
-									SetActorPitch(0, ActP);
-									SetActorAngle(0, ActA);	}
+		If(UseOfsRPA_As_ActRPA)	{	SetActorRoll (ActorTID, OfsR);
+									SetActorPitch(ActorTID, OfsP);
+									SetActorAngle(ActorTID, OfsA);	}
+		Else					{	SetActorRoll (ActorTID, ActR);
+									SetActorPitch(ActorTID, ActP);
+									SetActorAngle(ActorTID, ActA);	}
+		Return Output;
+	}
+	
+	Bool PosActorEx
+	(
+		Int TID,
+		Fixed PosX, Fixed PosY, Fixed PosZ,
+		Fixed OfsX, Fixed OfsY, Fixed OfsZ,
+		Fixed OfsR, Fixed OfsP, Fixed OfsA,
+		Bool Rotate = False
+	)
+	{
+		Int Output;
+		MathBI::RotateV3_RPA(OfsX, OfsY, OfsZ, OfsR, OfsP, OfsA, _Tmp::V3_0);
+		Int X = PosX + _Tmp::V3_0.X;
+		Int Y = PosY + _Tmp::V3_0.Y;
+		Int Z = PosZ + _Tmp::V3_0.Z;
+		
+		Output = SetActorPosition(TID, X, Y, Z, False);
+		
+		If(Rotate)
+		{
+			SetActorRoll (TID, OfsR);
+			SetActorPitch(TID, OfsP);
+			SetActorAngle(TID, OfsA);
+		}
+		
 		Return Output;
 	}
 }

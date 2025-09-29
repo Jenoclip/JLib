@@ -1017,25 +1017,32 @@ Namespace Graphics
 	
 	Internal Flags_ _WV3Proj__FlagFmt = (HUDMsg_Plain | HUDMsg_FadeOut | HUDMsg_FadeInOut | HUDMsg_TypeOn)^UInt32_Max;
 	
-	Fixed GetRatioScaling(Fixed VHUDRatio)				//	X Scaling
+	Fixed GetRatioScaling(Fixed WndRatio)				//	+ is X Scaling, - is Y Scaling
 	{
-		If(VHUDRatio == 0){Return 1.0;}
-		Switch(VHUDRatio)
+		If(WndRatio == 0){Return 1.0;}
+		Switch(WndRatio)
 		{
-			Case ARatio_21_9:	Return 37449;			//	0.5714263916015625	| 1.(3) / 2.(3)	irrational
-			Case ARatio_17_10:	Return 51400;			//	0.7843017578125		| 1.(3) / 1.7	irrational
-			Case ARatio_16_10:	Return 54613;			//	0.8333282470703125	| 0.8(3)
-			Case ARatio_16_9:	Return 49152;			//	0.75				| 0.75
-			Case ARatio_5_4:	Return 69905;			//	1.0666656494140625	| 1.0(6)
-			Case ARatio_4_3:	Return 65536;			//	1.0					| 1.0
-			Case ARatio_1_1:	Return 87381;			//	1.3333282470703125	| 1.(3)
+			Case ARatio_21_9:	Return  114688;			//	1.75				| 1.75
+			Case ARatio_17_10:	Return  83558;			//	1.274993896484375	| 1.275
+			Case ARatio_16_10:	Return  78643;			//	1.1999969482421875	| 1.2
+			Case ARatio_16_9:	Return  87381;			//	1.3333282470703125	| 1.(3)
+			Case ARatio_5_4:	Return -69905;			//	1.0666656494140625	| 1.0(6)
+			Case ARatio_4_3:	Return  65536;			//	1.0					| 1.0
+			Case ARatio_1_1:	Return -87381;			//	1.3333282470703125	| 1.(3)
 		}
-		Return FxD(ARatio_4_3, VHUDRatio);
+		If(WndRatio < ARatio_4_3)
+		{
+			Return -FxD(ARatio_4_3, WndRatio);
+		}
+		Else
+		{
+			Return FxD(WndRatio, ARatio_4_3);
+		}
 	}
 	
 	Fixed GetWndRatio()
 	{
-		Int CNum = ConsolePlayerNumber();
+		Int CNum = PlayerNumber(); //ConsolePlayerNumber();
 		Switch(GetUserCVar(CNum, "vid_aspect"))
 		{
 			Case 1:	Return ARatio_16_9	;
@@ -1064,97 +1071,55 @@ Namespace Graphics
 		Return FxD(GetScreenWidth()<<16, GetScreenHeight()<<16);
 	}
 	
-	Fixed RatioMap(Fixed Val, Fixed Max, Fixed VHUDRatio)//For true HUD coordinates
+	Fixed RatioMap(Fixed Val, Fixed Max, Fixed WndRatio, Bool X_or_Y = False)//For true HUD coordinates
 	{
-		If	(	(VHUDRatio == ARatio_4_3)	||
-				(VHUDRatio == 0)			||
+		If	(	(WndRatio == ARatio_4_3)	||
+				(WndRatio == 0)				||
 				(Max == 0.0)					){Return Val;}
+				
+		Fixed NMax = GetRatioScaling(WndRatio);
 		
-		Fixed NMax = FxD(Max, Math::DDiv(GetRatioScaling(VHUDRatio), 2));
+		If(X_or_Y == Math::BSign(NMax))	{Return Val;}
+		Else							{NMax = FxM(Max, Math::DDiv(NMax, 2));}
 		
 		Return Math::Map(Val, Max - NMax, NMax, 0.0, Max);
 	}
 	
-	Fixed FullScreenVFHUD(Fixed VFHUD_X, Fixed VFHUD_Y)//VFHUD - Virtual Fixed(type) HUD
+	Void FullScreenVFHUD(Fixed VFHUD_Min, Fixed WndRatio)//VFHUD - Virtual Fixed(type) HUD
 	{
-		If	(	(VFHUD_X == 0) ||
-				(VFHUD_Y == 0)		)	{Return VFHUD_X;}
-		Fixed Ratio = FxD(VFHUD_X, VFHUD_Y);
+		If	(	(VFHUD_Min == 0) ||
+				(WndRatio == 0)		)	{Return;}
 		
-		Switch(Ratio)
+		Fixed VFHUD_Scaled = FxM(VFHUD_Min, GetRatioScaling(WndRatio));
+		
+		If(VFHUD_Scaled < 0)
 		{
-			Case ARatio_21_9:
-				VFHUD_X = FxM(VFHUD_X, 37449);
-				Break;
-			
-			Case ARatio_17_10:
-				VFHUD_X = FxM(VFHUD_X, 51400);
-				Break;
-			
-			Case ARatio_16_10:
-				VFHUD_X = FxM(VFHUD_X, 54613);
-				Break;
-			
-			Case ARatio_16_9:
-				VFHUD_X = FxM(VFHUD_X, 49152);
-				Break;
-			
-			Case ARatio_5_4:
-				VFHUD_X = FxM(VFHUD_X, 69905);
-				Break;
-			
-			Case ARatio_4_3:Break;
-			
-			Case ARatio_1_1:
-				VFHUD_X = FxM(VFHUD_X, 87381);
-				Break;
-			
-			Default:
-				VFHUD_X = FxM(VFHUD_X, FxD(ARatio_4_3, Ratio));
-				Break;
+			SetHUDSize(VFHUD_Min >> 16, VFHUD_Scaled >> 16, False);
 		}
-		
-		SetHUDSize(VFHUD_X >> 16, VFHUD_Y >> 16, False);
-		Return VFHUD_X;
+		Else
+		{
+			SetHUDSize(VFHUD_Scaled >> 16, VFHUD_Min >> 16, False);
+		}
 	}
 	
-	Void FullScreenVFV2HUD(Vec2_T* VFV2HUD)//VFV2HUD - Virtual Fixed(type) 2D Vector HUD
+	Void FullScreenVFV2HUD(Vec2_T* VFV2HUD, Fixed WndRatio)//VFV2HUD - Virtual Fixed(type) 2D Vector HUD
 	{
 		If	(	(VFV2HUD.X == 0) ||
-				(VFV2HUD.Y == 0)	)	{Return;}
-		Fixed Ratio = FxD(VFV2HUD.X, VFV2HUD.Y);
+				(VFV2HUD.Y == 0) ||
+				(WndRatio == 0)		)	{Return;}
 		
-		Switch(Ratio)
+		VFV2HUD.X = Math::Min2(VFV2HUD.X, VFV2HUD.Y)			;
+		VFV2HUD.Y = FxM(VFV2HUD.X, GetRatioScaling(WndRatio))	;
+		
+		If(VFV2HUD.Y  < 0)
 		{
-			Case ARatio_21_9:
-				VFV2HUD.X = FxM(VFV2HUD.X, 37449);
-				Break;
-			
-			Case ARatio_17_10:
-				VFV2HUD.X = FxM(VFV2HUD.X, 51400);
-				Break;
-			
-			Case ARatio_16_10:
-				VFV2HUD.X = FxM(VFV2HUD.X, 54613);
-				Break;
-			
-			Case ARatio_16_9:
-				VFV2HUD.X = FxM(VFV2HUD.X, 49152);
-				Break;
-			
-			Case ARatio_5_4:
-				VFV2HUD.X = FxM(VFV2HUD.X, 69905);
-				Break;
-			
-			Case ARatio_4_3:Break;
-			
-			Case ARatio_1_1:
-				VFV2HUD.X = FxM(VFV2HUD.X, 87381);
-				Break;
-			
-			Default:
-				VFV2HUD.X = FxM(VFV2HUD.X, FxD(ARatio_4_3, Ratio));
-				Break;
+			VFV2HUD.Y = -VFV2HUD.Y	;
+		}
+		Else
+		{
+			Raw Temp = VFV2HUD.X	;
+			VFV2HUD.X = VFV2HUD.Y	;
+			VFV2HUD.Y = Temp		;
 		}
 	}
 	
@@ -1173,15 +1138,7 @@ Namespace Graphics
 	  █ █ █    █   █ █ █ █   █ █   █    █   █  █ █ █ ▀█
 	▀▀▀ ▀▀     ▀   ▀ ▀ ▀▀▀ ▀▀▀ ▀▀▀ ▀▀▀  ▀  ▀▀▀ ▀▀▀ ▀  ▀
 
-
-
-	Corona - Texture that used to imitate bloom from a point in Unreal Engine
-	It's necessary to use ``SetFont`` before calling theese functions.
-	
-	Draw_Corona[__FO\FIO][_S[_DL]]		- For coronas rendering. Do not have extra flags and 2D offsets
-	
-	Draw_WV3Image[__FO\FIO][_S[_DL]]	- For general image render. Have extra flags argument and 2D offsets
-	Draw_WV3Text[__FO\FIO][_S[_DL]]		- For text. Same as ``Draw_WV3Image``
+	Draw_WV3Text[__FO\FIO][_S[_DL]]		- Draw text or image on 3D World point projected to activator's 2D Screen point
 	
 	
 	_FO		- Fade Out. Image fades out when it suddenly disappears. HUDMsg_FadeOut mode is used.
@@ -1192,1273 +1149,9 @@ Namespace Graphics
 			  
 	_S		- Smooth. Adds extra alpha calculations to "erase" image around screen edges.
 	
-	_DL		- Double Layer. Prints 2 images\text at the same time with different alpha to create effect of high gamma
+	_DL		- Double Layer. Prints 2 images\texts at the same time with different alpha to create effect of high gamma (if HUDMSG_Alpha and HUDMSG_AddBlend is used)
 			  (like coronas in UE 2.5, that have high gamma).
 */
-	
-	Void Draw_Corona__FO
-	(
-		Vec3_T*	Point,
-		Vec2_T*	VFHUD,
-		Vec3_T*	ScaleX, Vec3_T* ScaleY,
-		Vec4_T*	Alpha,
-		Int		ID,
-		Fixed	FxHlFOV		= 0.125,//== FOV 90
-		Fixed	FadeOutTime	= 0.75,
-		Fixed 	HoldTime	= 0.04,
-		Fixed	Dst			= 0.0
-	)
-	{
-		Fixed dX = Point.X - GetActorX(0);
-		Fixed dY = Point.Y - GetActorY(0);
-		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
-
-		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
-
-		If(_Tmp::V3_0.X <= 0)		{Return;}
-
-		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
-
-		dX = FxM(VFHUD.X, Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z));
-		dY = FxM(VFHUD.Y, Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z));
-
-		SetHUDSize(dX >> 16, dY >> 16, False);
-
-		dX /= 2; dY /= 2;
-
-		dX = dX -		FxM(FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), dX);
-		dY = dY -	FxM(FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), dY), 1.6);
-
-		HUDMessage
-		(
-			s:"A"; HUDMsg_FadeOut | HUDMsg_Layer_UnderHUD | HUDMsg_Addblend | HUDMsg_Alpha,
-			ID, CR_Untranslated,
-			dX & 0xFFFF0000,
-			dY & 0xFFFF0000,
-			HoldTime, FadeOutTime,
-			FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W)
-		);
-	}
-	
-	Void Draw_Corona__FO_S
-	(
-		Vec3_T*	Point,
-		Vec2_T*	VFHUD,
-		Vec3_T*	ScaleX, Vec3_T* ScaleY,
-		Vec4_T*	Alpha,
-		Int		ID,
-		Fixed	FxHlFOV			= 0.125,//== FOV 90
-		Fixed	SV2DstFadeMul	= 8.0,
-		Fixed	SV2DstSizeDiv	= 256,
-		Fixed	FadeOutTime		= 0.75,
-		Fixed 	HoldTime		= 0.04,
-		Fixed	Dst				= 0.0
-	)
-	{
-		Fixed dX = Point.X - GetActorX(0);
-		Fixed dY = Point.Y - GetActorY(0);
-		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
-
-		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
-
-		If(_Tmp::V3_0.X <= 0)		{Return;}
-
-		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
-
-		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
-		Fixed HUDYSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
-
-		Fixed HUDX = Math::NoZero(FxM(VFHUD.X, HUDXSize));
-		Fixed HUDY = Math::NoZero(FxM(VFHUD.Y, HUDYSize));
-
-		SetHUDSize(HUDX >> 16, HUDY >> 16, False);
-
-		dX = HUDX/2; dY = HUDY/2;
-
-		HUDX =		FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV))		;
-		HUDY =	FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), 1.6);
-
-		dX = dX - FxM(HUDX, dX);
-		dY = dY - FxM(HUDY, dY);
-
-		dZ = VFHUD.X/2;
-		HUDX = RatioMap(dZ + FxM(HUDX, dZ), VFHUD.X, FxD(VFHUD.X, VFHUD.Y));
-
-		dZ = VFHUD.Y/2;
-		HUDY = dZ - FxM(HUDY, dZ);
-
-		HUDMessage
-		(
-			s:"A"; HUDMsg_FadeOut | HUDMsg_Layer_UnderHUD | HUDMsg_Addblend | HUDMsg_Alpha,
-			ID, CR_Untranslated,
-			dX & 0xFFFF0000,
-			dY & 0xFFFF0000,
-			HoldTime, FadeOutTime,
-			FxM
-			(
-				FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W),
-				Math::Clamp
-				(
-					FxM
-					(
-						Math::Min2(	Math::HalfPoint(FxD(HUDX, VFHUD.X), 1.0),
-									Math::HalfPoint(FxD(HUDY, VFHUD.Y), 1.0)	) +
-						Math::Mean2
-						(
-							FxD(SV2DstSizeDiv, Math::FPower2(HUDXSize/2)),
-							FxD(SV2DstSizeDiv, Math::FPower2(HUDYSize/2))
-						),
-						SV2DstFadeMul
-					), 0.0, 1.0
-				)
-			)
-		);
-	}
-	
-	Void Draw_Corona__FO_S_DL
-	(
-		Vec3_T*	Point,
-		Vec2_T*	VFHUD,
-		Vec3_T*	ScaleX, Vec3_T* ScaleY,
-		Vec4_T*	Alpha,
-		Int		ID1,
-		Int		ID2,
-		Fixed	FxHlFOV			= 0.125,//== FOV 90
-		Fixed	SV2DstFadeMul1	= 8.0,
-		Fixed	SV2DstFadeMul2	= 2.0,
-		Fixed	SV2DstSizeDiv	= 256,
-		Fixed	FadeOutTime		= 0.75,
-		Fixed 	HoldTime		= 0.04,
-		Fixed	Dst				= 0.0
-	)
-	{
-		Fixed dX = Point.X - GetActorX(0);
-		Fixed dY = Point.Y - GetActorY(0);
-		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
-
-		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
-
-		If(_Tmp::V3_0.X <= 0)		{Return;}
-
-		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
-
-		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
-		Fixed HUDYSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
-
-		Fixed HUDX = Math::NoZero(FxM(VFHUD.X, HUDXSize));
-		Fixed HUDY = Math::NoZero(FxM(VFHUD.Y, HUDYSize));
-
-		SetHUDSize(HUDX >> 16, HUDY >> 16, False);
-
-		dX = HUDX/2; dY = HUDY/2;
-
-		HUDX =		FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV))		;
-		HUDY =	FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), 1.6);
-
-		dX = dX - FxM(HUDX, dX);
-		dY = dY - FxM(HUDY, dY);
-
-		dZ = VFHUD.X/2;
-		HUDX = RatioMap(dZ + FxM(HUDX, dZ), VFHUD.X, FxD(VFHUD.X, VFHUD.Y));
-
-		dZ = VFHUD.Y/2;
-		HUDY = dZ - FxM(HUDY, dZ);
-
-		dZ =	Math::Min2(	Math::HalfPoint(FxD(HUDX, VFHUD.X), 1.0),
-							Math::HalfPoint(FxD(HUDY, VFHUD.Y), 1.0)	) +
-				Math::Mean2
-				(
-					FxD(SV2DstSizeDiv, Math::FPower2(HUDXSize/2)),
-					FxD(SV2DstSizeDiv, Math::FPower2(HUDYSize/2))
-				);
-		FxHlFOV = FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W);
-
-		HUDMessage
-		(
-			s:"A"; HUDMsg_FadeOut | HUDMsg_Layer_UnderHUD | HUDMsg_Addblend | HUDMsg_Alpha,
-			ID1, CR_Untranslated,
-			dX & 0xFFFF0000,
-			dY & 0xFFFF0000,
-			HoldTime, FadeOutTime,
-			FxM(FxHlFOV, Math::Clamp(FxM(dZ, SV2DstFadeMul1), 0.0, 1.0))
-		);
-		HUDMessage
-		(
-			s:"A"; HUDMsg_FadeOut | HUDMsg_Layer_UnderHUD | HUDMsg_Addblend | HUDMsg_Alpha,
-			ID2, CR_Untranslated,
-			dX & 0xFFFF0000,
-			dY & 0xFFFF0000,
-			HoldTime, FadeOutTime/2,
-			FxM(FxHlFOV, Math::Clamp(FxM(dZ, SV2DstFadeMul2), 0.0, 1.0))/2
-		);
-	}
-	
-	Void Draw_Corona
-	(
-		Vec3_T*	Point,
-		Vec2_T*	VFHUD,
-		Vec3_T*	ScaleX, Vec3_T* ScaleY,
-		Vec4_T*	Alpha,
-		Int		ID,
-		Fixed	FxHlFOV		= 0.125,//== FOV 90
-		Fixed	FadeOutTime	= 0.75,
-		Fixed 	HoldTime	= 0.04,
-		Fixed	Dst			= 0.0
-	)
-	{
-		Fixed dX = Point.X - GetActorX(0);
-		Fixed dY = Point.Y - GetActorY(0);
-		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
-
-		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
-
-		If(_Tmp::V3_0.X <= 0)		{Return;}
-
-		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
-
-		dX = FxM(VFHUD.X, Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z));
-		dY = FxM(VFHUD.Y, Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z));
-
-		SetHUDSize(dX >> 16, dY >> 16, False);
-
-		dX /= 2; dY /= 2;
-
-		dX = dX -		FxM(FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), dX);
-		dY = dY -	FxM(FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), dY), 1.6);
-
-		HUDMessage
-		(
-			s:"A"; HUDMsg_Plain | HUDMsg_Layer_UnderHUD | HUDMsg_Addblend | HUDMsg_Alpha,
-			ID, CR_Untranslated,
-			dX & 0xFFFF0000,
-			dY & 0xFFFF0000,
-			HoldTime,
-			FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W)
-		);
-	}
-	
-	Void Draw_Corona__S
-	(
-		Vec3_T*	Point,
-		Vec2_T*	VFHUD,
-		Vec3_T*	ScaleX, Vec3_T* ScaleY,
-		Vec4_T*	Alpha,
-		Int		ID,
-		Fixed	FxHlFOV			= 0.125,//== FOV 90
-		Fixed	SV2DstFadeMul	= 8.0,
-		Fixed	SV2DstSizeDiv	= 256,
-		Fixed 	HoldTime		= 0.04,
-		Fixed	Dst				= 0.0
-	)
-	{
-		Fixed dX = Point.X - GetActorX(0);
-		Fixed dY = Point.Y - GetActorY(0);
-		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
-
-		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
-
-		If(_Tmp::V3_0.X <= 0)		{Return;}
-
-		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
-
-		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
-		Fixed HUDYSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
-
-		Fixed HUDX = Math::NoZero(FxM(VFHUD.X, HUDXSize));
-		Fixed HUDY = Math::NoZero(FxM(VFHUD.Y, HUDYSize));
-
-		SetHUDSize(HUDX >> 16, HUDY >> 16, False);
-
-		dX = HUDX/2; dY = HUDY/2;
-
-		HUDX =		FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV))		;
-		HUDY =	FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), 1.6);
-
-		dX = dX - FxM(HUDX, dX);
-		dY = dY - FxM(HUDY, dY);
-
-		dZ = VFHUD.X/2;
-		HUDX = RatioMap(dZ + FxM(HUDX, dZ), VFHUD.X, FxD(VFHUD.X, VFHUD.Y));
-
-		dZ = VFHUD.Y/2;
-		HUDY = dZ - FxM(HUDY, dZ);
-
-		HUDMessage
-		(
-			s:"A"; HUDMsg_Plain | HUDMsg_Layer_UnderHUD | HUDMsg_Addblend | HUDMsg_Alpha,
-			ID, CR_Untranslated,
-			dX & 0xFFFF0000,
-			dY & 0xFFFF0000,
-			HoldTime,
-			FxM
-			(
-				FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W),
-				Math::Clamp
-				(
-					FxM
-					(
-						Math::Min2(	Math::HalfPoint(FxD(HUDX, VFHUD.X), 1.0),
-									Math::HalfPoint(FxD(HUDY, VFHUD.Y), 1.0)	) +
-						Math::Mean2
-						(
-							FxD(SV2DstSizeDiv, Math::FPower2(HUDXSize/2)),
-							FxD(SV2DstSizeDiv, Math::FPower2(HUDYSize/2))
-						),
-						SV2DstFadeMul
-					), 0.0, 1.0
-				)
-			)
-		);
-	}
-	
-	Void Draw_Corona__S_DL
-	(
-		Vec3_T*	Point,
-		Vec2_T*	VFHUD,
-		Vec3_T*	ScaleX, Vec3_T* ScaleY,
-		Vec4_T*	Alpha,
-		Int		ID1,
-		Int		ID2,
-		Fixed	FxHlFOV			= 0.125,//== FOV 90
-		Fixed	SV2DstFadeMul1	= 8.0,
-		Fixed	SV2DstFadeMul2	= 2.0,
-		Fixed	SV2DstSizeDiv	= 256,
-		Fixed 	HoldTime		= 0.04,
-		Fixed	Dst				= 0.0
-	)
-	{
-		Fixed dX = Point.X - GetActorX(0);
-		Fixed dY = Point.Y - GetActorY(0);
-		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
-
-		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
-
-		If(_Tmp::V3_0.X <= 0)		{Return;}
-
-		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
-
-		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
-		Fixed HUDYSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
-
-		Fixed HUDX = Math::NoZero(FxM(VFHUD.X, HUDXSize));
-		Fixed HUDY = Math::NoZero(FxM(VFHUD.Y, HUDYSize));
-
-		SetHUDSize(HUDX >> 16, HUDY >> 16, False);
-
-		dX = HUDX/2; dY = HUDY/2;
-
-		HUDX =		FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV))		;
-		HUDY =	FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), 1.6);
-
-		dX = dX - FxM(HUDX, dX);
-		dY = dY - FxM(HUDY, dY);
-
-		dZ = VFHUD.X/2;
-		HUDX = RatioMap(dZ + FxM(HUDX, dZ), VFHUD.X, FxD(VFHUD.X, VFHUD.Y));
-
-		dZ = VFHUD.Y/2;
-		HUDY = dZ - FxM(HUDY, dZ);
-
-		dZ =	Math::Min2(	Math::HalfPoint(FxD(HUDX, VFHUD.X), 1.0),
-							Math::HalfPoint(FxD(HUDY, VFHUD.Y), 1.0)	) +
-				Math::Mean2
-				(
-					FxD(SV2DstSizeDiv, Math::FPower2(HUDXSize/2)),
-					FxD(SV2DstSizeDiv, Math::FPower2(HUDYSize/2))
-				);
-		FxHlFOV = FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W);
-
-		HUDMessage
-		(
-			s:"A"; HUDMsg_Plain | HUDMsg_Layer_UnderHUD | HUDMsg_Addblend | HUDMsg_Alpha,
-			ID1, CR_Untranslated,
-			dX & 0xFFFF0000,
-			dY & 0xFFFF0000,
-			HoldTime,
-			FxM(FxHlFOV, Math::Clamp(FxM(dZ, SV2DstFadeMul1), 0.0, 1.0))
-		);
-		HUDMessage
-		(
-			s:"A"; HUDMsg_Plain | HUDMsg_Layer_UnderHUD | HUDMsg_Addblend | HUDMsg_Alpha,
-			ID2, CR_Untranslated,
-			dX & 0xFFFF0000,
-			dY & 0xFFFF0000,
-			HoldTime,
-			FxM(FxHlFOV, Math::Clamp(FxM(dZ, SV2DstFadeMul2), 0.0, 1.0))/2
-		);
-	}
-	
-	Void Draw_Corona__FIO
-	(
-		Vec3_T*	Point,
-		Vec2_T*	VFHUD,
-		Vec3_T*	ScaleX, Vec3_T* ScaleY,
-		Vec4_T*	Alpha,
-		Int		ID,
-		Fixed	FxHlFOV		= 0.125,//== FOV 90
-		Fixed	FadeInTime	= 0.75,
-		Fixed	FadeOutTime	= 0.75,
-		Fixed 	HoldTime	= 0.04,
-		Fixed	Dst			= 0.0
-	)
-	{
-		Fixed dX = Point.X - GetActorX(0);
-		Fixed dY = Point.Y - GetActorY(0);
-		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
-
-		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
-
-		If(_Tmp::V3_0.X <= 0)		{Return;}
-
-		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
-
-		dX = FxM(VFHUD.X, Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z));
-		dY = FxM(VFHUD.Y, Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z));
-
-		SetHUDSize(dX >> 16, dY >> 16, False);
-
-		dX /= 2; dY /= 2;
-
-		dX = dX -		FxM(FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), dX);
-		dY = dY -	FxM(FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), dY), 1.6);
-
-		HUDMessage
-		(
-			s:"A"; HUDMsg_FadeInOut | HUDMsg_Layer_UnderHUD | HUDMsg_Addblend | HUDMsg_Alpha,
-			ID, CR_Untranslated,
-			dX & 0xFFFF0000,
-			dY & 0xFFFF0000,
-			HoldTime, FadeInTime, FadeOutTime,
-			FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W)
-		);
-	}
-	
-	Void Draw_Corona__FIO_S
-	(
-		Vec3_T*	Point,
-		Vec2_T*	VFHUD,
-		Vec3_T*	ScaleX, Vec3_T* ScaleY,
-		Vec4_T*	Alpha,
-		Int		ID,
-		Fixed	FxHlFOV			= 0.125,//== FOV 90
-		Fixed	SV2DstFadeMul	= 8.0,
-		Fixed	SV2DstSizeDiv	= 256,
-		Fixed	FadeInTime		= 0.75,
-		Fixed	FadeOutTime		= 0.75,
-		Fixed 	HoldTime		= 0.04,
-		Fixed	Dst				= 0.0
-	)
-	{
-		Fixed dX = Point.X - GetActorX(0);
-		Fixed dY = Point.Y - GetActorY(0);
-		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
-
-		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
-
-		If(_Tmp::V3_0.X <= 0)		{Return;}
-
-		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
-
-		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
-		Fixed HUDYSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
-
-		Fixed HUDX = Math::NoZero(FxM(VFHUD.X, HUDXSize));
-		Fixed HUDY = Math::NoZero(FxM(VFHUD.Y, HUDYSize));
-
-		SetHUDSize(HUDX >> 16, HUDY >> 16, False);
-
-		dX = HUDX/2; dY = HUDY/2;
-
-		HUDX =		FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV))		;
-		HUDY =	FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), 1.6);
-
-		dX = dX - FxM(HUDX, dX);
-		dY = dY - FxM(HUDY, dY);
-
-		dZ = VFHUD.X/2;
-		HUDX = RatioMap(dZ + FxM(HUDX, dZ), VFHUD.X, FxD(VFHUD.X, VFHUD.Y));
-
-		dZ = VFHUD.Y/2;
-		HUDY = dZ - FxM(HUDY, dZ);
-
-		HUDMessage
-		(
-			s:"A"; HUDMsg_FadeInOut | HUDMsg_Layer_UnderHUD | HUDMsg_Addblend | HUDMsg_Alpha,
-			ID, CR_Untranslated,
-			dX & 0xFFFF0000,
-			dY & 0xFFFF0000,
-			HoldTime, FadeInTime, FadeOutTime,
-			FxM
-			(
-				FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W),
-				Math::Clamp
-				(
-					FxM
-					(
-						Math::Min2(	Math::HalfPoint(FxD(HUDX, VFHUD.X), 1.0),
-									Math::HalfPoint(FxD(HUDY, VFHUD.Y), 1.0)	) +
-						Math::Mean2
-						(
-							FxD(SV2DstSizeDiv, Math::FPower2(HUDXSize/2)),
-							FxD(SV2DstSizeDiv, Math::FPower2(HUDYSize/2))
-						),
-						SV2DstFadeMul
-					), 0.0, 1.0
-				)
-			)
-		);
-	}
-	
-	Void Draw_Corona__FIO_S_DL
-	(
-		Vec3_T*	Point,
-		Vec2_T*	VFHUD,
-		Vec3_T*	ScaleX, Vec3_T* ScaleY,
-		Vec4_T*	Alpha,
-		Int		ID1,
-		Int		ID2,
-		Fixed	FxHlFOV			= 0.125,//== FOV 90
-		Fixed	SV2DstFadeMul1	= 8.0,
-		Fixed	SV2DstFadeMul2	= 2.0,
-		Fixed	SV2DstSizeDiv	= 256,
-		Fixed	FadeInTime		= 0.75,
-		Fixed	FadeOutTime		= 0.75,
-		Fixed 	HoldTime		= 0.04,
-		Fixed	Dst				= 0.0
-	)
-	{
-		Fixed dX = Point.X - GetActorX(0);
-		Fixed dY = Point.Y - GetActorY(0);
-		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
-
-		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
-
-		If(_Tmp::V3_0.X <= 0)		{Return;}
-
-		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
-
-		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
-		Fixed HUDYSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
-
-		Fixed HUDX = Math::NoZero(FxM(VFHUD.X, HUDXSize));
-		Fixed HUDY = Math::NoZero(FxM(VFHUD.Y, HUDYSize));
-
-		SetHUDSize(HUDX >> 16, HUDY >> 16, False);
-
-		dX = HUDX/2; dY = HUDY/2;
-
-		HUDX =		FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV))		;
-		HUDY =	FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), 1.6);
-
-		dX = dX - FxM(HUDX, dX);
-		dY = dY - FxM(HUDY, dY);
-
-		dZ = VFHUD.X/2;
-		HUDX = RatioMap(dZ + FxM(HUDX, dZ), VFHUD.X, FxD(VFHUD.X, VFHUD.Y));
-
-		dZ = VFHUD.Y/2;
-		HUDY = dZ - FxM(HUDY, dZ);
-
-		dZ =	Math::Min2(	Math::HalfPoint(FxD(HUDX, VFHUD.X), 1.0),
-							Math::HalfPoint(FxD(HUDY, VFHUD.Y), 1.0)	) +
-				Math::Mean2
-				(
-					FxD(SV2DstSizeDiv, Math::FPower2(HUDXSize/2)),
-					FxD(SV2DstSizeDiv, Math::FPower2(HUDYSize/2))
-				);
-		FxHlFOV = FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W);
-
-		HUDMessage
-		(
-			s:"A"; HUDMsg_FadeInOut | HUDMsg_Layer_UnderHUD | HUDMsg_Addblend | HUDMsg_Alpha,
-			ID1, CR_Untranslated,
-			dX & 0xFFFF0000,
-			dY & 0xFFFF0000,
-			HoldTime, FadeInTime, FadeOutTime,
-			FxM(FxHlFOV, Math::Clamp(FxM(dZ, SV2DstFadeMul1), 0.0, 1.0))
-		);
-		HUDMessage
-		(
-			s:"A"; HUDMsg_FadeInOut | HUDMsg_Layer_UnderHUD | HUDMsg_Addblend | HUDMsg_Alpha,
-			ID2, CR_Untranslated,
-			dX & 0xFFFF0000,
-			dY & 0xFFFF0000,
-			HoldTime, FadeInTime, FadeOutTime/2,
-			FxM(FxHlFOV, Math::Clamp(FxM(dZ, SV2DstFadeMul2), 0.0, 1.0))/2
-		);
-	}
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	Void Draw_WV3Image__FO
-	(
-		Vec3_T*	Point,
-		Vec2_T*	VFHUD,
-		Vec3_T*	ScaleX, Vec3_T* ScaleY,
-		Vec4_T*	Alpha,
-		Int		ID,
-		Fixed	FxHlFOV		= 0.125,//== FOV 90
-		Flags_	Flags		= 0,
-		Fixed	OffsetX		= 0,
-		Fixed	OffsetY		= 0,
-		Fixed	FadeOutTime	= 0.75,
-		Fixed 	HoldTime	= 0.04,
-		Fixed	Dst			= 0.0
-	)
-	{
-		Fixed dX = Point.X - GetActorX(0);
-		Fixed dY = Point.Y - GetActorY(0);
-		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
-
-		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
-
-		If(_Tmp::V3_0.X <= 0)		{Return;}
-
-		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
-
-		dX = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
-		dY = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
-		
-		OffsetX = (FxM(OffsetX, dX) & 0xFFFF0000) | (OffsetX & 0x0000FFFF);
-		OffsetY = (FxM(OffsetY, dY) & 0xFFFF0000) | (OffsetY & 0x0000FFFF);
-
-		dX = Math::NoZero(FxM(VFHUD.X, dX));
-		dY = Math::NoZero(FxM(VFHUD.Y, dY));
-
-		SetHUDSize(dX >> 16, dY >> 16, False);
-
-		dX /= 2; dY /= 2;
-
-		dX = dX -		FxM(FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), dX);
-		dY = dY -	FxM(FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), dY), 1.6);
-		
-		HUDMessage
-		(
-			s:"A"; HUDMsg_FadeOut | (Flags & _WV3Proj__FlagFmt),
-			ID, CR_Untranslated,
-			(dX & 0xFFFF0000) + OffsetX,
-			(dY & 0xFFFF0000) + OffsetY,
-			HoldTime, FadeOutTime,
-			FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W)
-		);
-	}
-	
-	Void Draw_WV3Image__FO_S
-	(
-		Vec3_T*	Point,
-		Vec2_T*	VFHUD,
-		Vec3_T*	ScaleX, Vec3_T* ScaleY,
-		Vec4_T*	Alpha,
-		Int		ID,
-		Fixed	FxHlFOV			= 0.125,//== FOV 90
-		Flags_	Flags			= 0,
-		Fixed	OffsetX			= 0,
-		Fixed	OffsetY			= 0,
-		Fixed	SV2DstFadeMul	= 8.0,
-		Fixed	SV2DstSizeDiv	= 256,
-		Fixed	FadeOutTime		= 0.75,
-		Fixed 	HoldTime		= 0.04,
-		Fixed	Dst				= 0.0
-	)
-	{
-		Fixed dX = Point.X - GetActorX(0);
-		Fixed dY = Point.Y - GetActorY(0);
-		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
-
-		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
-
-		If(_Tmp::V3_0.X <= 0)		{Return;}
-
-		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
-
-		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
-		Fixed HUDYSize = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
-
-		Fixed HUDX = Math::NoZero(FxM(VFHUD.X, HUDXSize));
-		Fixed HUDY = Math::NoZero(FxM(VFHUD.Y, HUDYSize));
-		
-		OffsetX = (FxM(OffsetX, HUDXSize) & 0xFFFF0000) | (OffsetX & 0x0000FFFF);
-		OffsetY = (FxM(OffsetY, HUDYSize) & 0xFFFF0000) | (OffsetY & 0x0000FFFF);
-
-		SetHUDSize(HUDX >> 16, HUDY >> 16, False);
-
-		dX = HUDX/2; dY = HUDY/2;
-
-		HUDX =		FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV))		;
-		HUDY =	FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), 1.6);
-
-		dX = dX - FxM(HUDX, dX);
-		dY = dY - FxM(HUDY, dY);
-
-		dZ = VFHUD.X/2;
-		HUDX = RatioMap(dZ + FxM(HUDX, dZ), VFHUD.X, FxD(VFHUD.X, VFHUD.Y));
-
-		dZ = VFHUD.Y/2;
-		HUDY = dZ - FxM(HUDY, dZ);
-
-		HUDMessage
-		(
-			s:"A"; HUDMsg_FadeOut | (Flags & _WV3Proj__FlagFmt),
-			ID, CR_Untranslated,
-			(dX & 0xFFFF0000) + OffsetX,
-			(dY & 0xFFFF0000) + OffsetY,
-			HoldTime, FadeOutTime,
-			FxM
-			(
-				FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W),
-				Math::Clamp
-				(
-					FxM
-					(
-						Math::Min2(	Math::HalfPoint(FxD(HUDX, VFHUD.X), 1.0),
-									Math::HalfPoint(FxD(HUDY, VFHUD.Y), 1.0)	) +
-						Math::Mean2
-						(
-							FxD(SV2DstSizeDiv, Math::FPower2(HUDXSize/2)),
-							FxD(SV2DstSizeDiv, Math::FPower2(HUDYSize/2))
-						),
-						SV2DstFadeMul
-					), 0.0, 1.0
-				)
-			)
-		);
-	}
-	
-	Void Draw_WV3Image__FO_S_DL
-	(
-		Vec3_T*	Point,
-		Vec2_T*	VFHUD,
-		Vec3_T*	ScaleX, Vec3_T* ScaleY,
-		Vec4_T*	Alpha,
-		Int		ID1,
-		Int		ID2,
-		Fixed	FxHlFOV			= 0.125,//== FOV 90
-		Flags_	Flags			= 0,
-		Fixed	OffsetX			= 0,
-		Fixed	OffsetY			= 0,
-		Fixed	SV2DstFadeMul1	= 8.0,
-		Fixed	SV2DstFadeMul2	= 2.0,
-		Fixed	SV2DstSizeDiv	= 256,
-		Fixed	FadeOutTime		= 0.75,
-		Fixed 	HoldTime		= 0.04,
-		Fixed	Dst				= 0.0
-	)
-	{
-		Fixed dX = Point.X - GetActorX(0);
-		Fixed dY = Point.Y - GetActorY(0);
-		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
-
-		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
-
-		If(_Tmp::V3_0.X <= 0)		{Return;}
-
-		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
-
-		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
-		Fixed HUDYSize = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
-
-		Fixed HUDX = Math::NoZero(FxM(VFHUD.X, HUDXSize));
-		Fixed HUDY = Math::NoZero(FxM(VFHUD.Y, HUDYSize));
-		
-		OffsetX = (FxM(OffsetX, HUDXSize) & 0xFFFF0000) | (OffsetX & 0x0000FFFF);
-		OffsetY = (FxM(OffsetY, HUDYSize) & 0xFFFF0000) | (OffsetY & 0x0000FFFF);
-
-		SetHUDSize(HUDX >> 16, HUDY >> 16, False);
-
-		dX = HUDX/2; dY = HUDY/2;
-
-		HUDX =		FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV))		;
-		HUDY =	FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), 1.6);
-
-		dX = dX - FxM(HUDX, dX);
-		dY = dY - FxM(HUDY, dY);
-
-		dZ = VFHUD.X/2;
-		HUDX = RatioMap(dZ + FxM(HUDX, dZ), VFHUD.X, FxD(VFHUD.X, VFHUD.Y));
-
-		dZ = VFHUD.Y/2;
-		HUDY = dZ - FxM(HUDY, dZ);
-
-		dZ =	Math::Min2(	Math::HalfPoint(FxD(HUDX, VFHUD.X), 1.0),
-							Math::HalfPoint(FxD(HUDY, VFHUD.Y), 1.0)	) +
-				Math::Mean2
-				(
-					FxD(SV2DstSizeDiv, Math::FPower2(HUDXSize/2)),
-					FxD(SV2DstSizeDiv, Math::FPower2(HUDYSize/2))
-				);
-		FxHlFOV = FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W);
-
-		HUDMessage
-		(
-			s:"A"; HUDMsg_FadeOut | (Flags & _WV3Proj__FlagFmt),
-			ID1, CR_Untranslated,
-			(dX & 0xFFFF0000) + OffsetX,
-			(dY & 0xFFFF0000) + OffsetY,
-			HoldTime, FadeOutTime,
-			FxM(FxHlFOV, Math::Clamp(FxM(dZ, SV2DstFadeMul1), 0.0, 1.0))
-		);
-		HUDMessage
-		(
-			s:"A"; HUDMsg_FadeOut | (Flags & _WV3Proj__FlagFmt),
-			ID2, CR_Untranslated,
-			(dX & 0xFFFF0000) + OffsetX,
-			(dY & 0xFFFF0000) + OffsetY,
-			HoldTime, FadeOutTime/2,
-			FxM(FxHlFOV, Math::Clamp(FxM(dZ, SV2DstFadeMul2), 0.0, 1.0))/2
-		);
-	}
-	
-	Void Draw_WV3Image
-	(
-		Vec3_T*	Point,
-		Vec2_T*	VFHUD,
-		Vec3_T*	ScaleX, Vec3_T* ScaleY,
-		Vec4_T*	Alpha,
-		Int		ID,
-		Fixed	FxHlFOV		= 0.125,//== FOV 90
-		Flags_	Flags		= 0,
-		Fixed	OffsetX		= 0,
-		Fixed	OffsetY		= 0,
-		Fixed	FadeOutTime	= 0.75,
-		Fixed 	HoldTime	= 0.04,
-		Fixed	Dst			= 0.0
-	)
-	{
-		Fixed dX = Point.X - GetActorX(0);
-		Fixed dY = Point.Y - GetActorY(0);
-		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
-
-		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
-
-		If(_Tmp::V3_0.X <= 0)		{Return;}
-
-		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
-
-		dX = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
-		dY = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
-		
-		OffsetX = (FxM(OffsetX, dX) & 0xFFFF0000) | (OffsetX & 0x0000FFFF);
-		OffsetY = (FxM(OffsetY, dY) & 0xFFFF0000) | (OffsetY & 0x0000FFFF);
-
-		dX = Math::NoZero(FxM(VFHUD.X, dX));
-		dY = Math::NoZero(FxM(VFHUD.Y, dY));
-
-		SetHUDSize(dX >> 16, dY >> 16, False);
-
-		dX /= 2; dY /= 2;
-
-		dX = dX -		FxM(FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), dX);
-		dY = dY -	FxM(FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), dY), 1.6);
-
-		HUDMessage
-		(
-			s:"A"; HUDMsg_Plain | (Flags & _WV3Proj__FlagFmt),
-			ID, CR_Untranslated,
-			(dX & 0xFFFF0000) + OffsetX,
-			(dY & 0xFFFF0000) + OffsetY,
-			HoldTime,
-			FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W)
-		);
-	}
-	
-	Void Draw_WV3Image__S
-	(
-		Vec3_T*	Point,
-		Vec2_T*	VFHUD,
-		Vec3_T*	ScaleX, Vec3_T* ScaleY,
-		Vec4_T*	Alpha,
-		Int		ID,
-		Fixed	FxHlFOV			= 0.125,//== FOV 90
-		Flags_	Flags			= 0,
-		Fixed	OffsetX			= 0,
-		Fixed	OffsetY			= 0,
-		Fixed	SV2DstFadeMul	= 8.0,
-		Fixed	SV2DstSizeDiv	= 256,
-		Fixed 	HoldTime		= 0.04,
-		Fixed	Dst				= 0.0
-	)
-	{
-		Fixed dX = Point.X - GetActorX(0);
-		Fixed dY = Point.Y - GetActorY(0);
-		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
-
-		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
-
-		If(_Tmp::V3_0.X <= 0)		{Return;}
-
-		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
-
-		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
-		Fixed HUDYSize = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
-
-		Fixed HUDX = Math::NoZero(FxM(VFHUD.X, HUDXSize));
-		Fixed HUDY = Math::NoZero(FxM(VFHUD.Y, HUDYSize));
-		
-		OffsetX = (FxM(OffsetX, HUDXSize) & 0xFFFF0000) | (OffsetX & 0x0000FFFF);
-		OffsetY = (FxM(OffsetY, HUDYSize) & 0xFFFF0000) | (OffsetY & 0x0000FFFF);
-
-		SetHUDSize(HUDX >> 16, HUDY >> 16, False);
-
-		dX = HUDX/2; dY = HUDY/2;
-
-		HUDX =		FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV))		;
-		HUDY =	FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), 1.6);
-
-		dX = dX - FxM(HUDX, dX);
-		dY = dY - FxM(HUDY, dY);
-
-		dZ = VFHUD.X/2;
-		HUDX = RatioMap(dZ + FxM(HUDX, dZ), VFHUD.X, FxD(VFHUD.X, VFHUD.Y));
-
-		dZ = VFHUD.Y/2;
-		HUDY = dZ - FxM(HUDY, dZ);
-
-		HUDMessage
-		(
-			s:"A"; HUDMsg_Plain | (Flags & _WV3Proj__FlagFmt),
-			ID, CR_Untranslated,
-			(dX & 0xFFFF0000) + OffsetX,
-			(dY & 0xFFFF0000) + OffsetY,
-			HoldTime,
-			FxM
-			(
-				FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W),
-				Math::Clamp
-				(
-					FxM
-					(
-						Math::Min2(	Math::HalfPoint(FxD(HUDX, VFHUD.X), 1.0),
-									Math::HalfPoint(FxD(HUDY, VFHUD.Y), 1.0)	) +
-						Math::Mean2
-						(
-							FxD(SV2DstSizeDiv, Math::FPower2(HUDXSize/2)),
-							FxD(SV2DstSizeDiv, Math::FPower2(HUDYSize/2))
-						),
-						SV2DstFadeMul
-					), 0.0, 1.0
-				)
-			)
-		);
-	}
-	
-	Void Draw_WV3Image__S_DL
-	(
-		Vec3_T*	Point,
-		Vec2_T*	VFHUD,
-		Vec3_T*	ScaleX, Vec3_T* ScaleY,
-		Vec4_T*	Alpha,
-		Int		ID1,
-		Int		ID2,
-		Fixed	FxHlFOV			= 0.125,//== FOV 90
-		Flags_	Flags			= 0,
-		Fixed	OffsetX			= 0,
-		Fixed	OffsetY			= 0,
-		Fixed	SV2DstFadeMul1	= 8.0,
-		Fixed	SV2DstFadeMul2	= 2.0,
-		Fixed	SV2DstSizeDiv	= 256,
-		Fixed 	HoldTime		= 0.04,
-		Fixed	Dst				= 0.0
-	)
-	{
-		Fixed dX = Point.X - GetActorX(0);
-		Fixed dY = Point.Y - GetActorY(0);
-		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
-
-		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
-
-		If(_Tmp::V3_0.X <= 0)		{Return;}
-
-		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
-
-		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
-		Fixed HUDYSize = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
-
-		Fixed HUDX = Math::NoZero(FxM(VFHUD.X, HUDXSize));
-		Fixed HUDY = Math::NoZero(FxM(VFHUD.Y, HUDYSize));
-		
-		OffsetX = (FxM(OffsetX, HUDXSize) & 0xFFFF0000) | (OffsetX & 0x0000FFFF);
-		OffsetY = (FxM(OffsetY, HUDYSize) & 0xFFFF0000) | (OffsetY & 0x0000FFFF);
-
-		SetHUDSize(HUDX >> 16, HUDY >> 16, False);
-
-		dX = HUDX/2; dY = HUDY/2;
-
-		HUDX =		FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV))		;
-		HUDY =	FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), 1.6);
-
-		dX = dX - FxM(HUDX, dX);
-		dY = dY - FxM(HUDY, dY);
-
-		dZ = VFHUD.X/2;
-		HUDX = RatioMap(dZ + FxM(HUDX, dZ), VFHUD.X, FxD(VFHUD.X, VFHUD.Y));
-
-		dZ = VFHUD.Y/2;
-		HUDY = dZ - FxM(HUDY, dZ);
-
-		dZ =	Math::Min2(	Math::HalfPoint(FxD(HUDX, VFHUD.X), 1.0),
-							Math::HalfPoint(FxD(HUDY, VFHUD.Y), 1.0)	) +
-				Math::Mean2
-				(
-					FxD(SV2DstSizeDiv, Math::FPower2(HUDXSize/2)),
-					FxD(SV2DstSizeDiv, Math::FPower2(HUDYSize/2))
-				);
-		FxHlFOV = FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W);
-
-		HUDMessage
-		(
-			s:"A"; HUDMsg_Plain | (Flags & _WV3Proj__FlagFmt),
-			ID1, CR_Untranslated,
-			(dX & 0xFFFF0000) + OffsetX,
-			(dY & 0xFFFF0000) + OffsetY,
-			HoldTime,
-			FxM(FxHlFOV, Math::Clamp(FxM(dZ, SV2DstFadeMul1), 0.0, 1.0))
-		);
-		HUDMessage
-		(
-			s:"A"; HUDMsg_Plain | (Flags & _WV3Proj__FlagFmt),
-			ID2, CR_Untranslated,
-			(dX & 0xFFFF0000) + OffsetX,
-			(dY & 0xFFFF0000) + OffsetY,
-			HoldTime,
-			FxM(FxHlFOV, Math::Clamp(FxM(dZ, SV2DstFadeMul2), 0.0, 1.0))/2
-		);
-	}
-	
-	Void Draw_WV3Image__FIO
-	(
-		Vec3_T*	Point,
-		Vec2_T*	VFHUD,
-		Vec3_T*	ScaleX, Vec3_T* ScaleY,
-		Vec4_T*	Alpha,
-		Int		ID,
-		Fixed	FxHlFOV		= 0.125,//== FOV 90
-		Flags_	Flags		= 0,
-		Fixed	OffsetX		= 0,
-		Fixed	OffsetY		= 0,
-		Fixed	FadeInTime	= 0.75,
-		Fixed	FadeOutTime	= 0.75,
-		Fixed 	HoldTime	= 0.04,
-		Fixed	Dst			= 0.0
-	)
-	{
-		Fixed dX = Point.X - GetActorX(0);
-		Fixed dY = Point.Y - GetActorY(0);
-		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
-
-		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
-
-		If(_Tmp::V3_0.X <= 0)		{Return;}
-
-		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
-
-		dX = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
-		dY = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
-		
-		OffsetX = (FxM(OffsetX, dX) & 0xFFFF0000) | (OffsetX & 0x0000FFFF);
-		OffsetY = (FxM(OffsetY, dY) & 0xFFFF0000) | (OffsetY & 0x0000FFFF);
-
-		dX = Math::NoZero(FxM(VFHUD.X, dX));
-		dY = Math::NoZero(FxM(VFHUD.Y, dY));
-
-		SetHUDSize(dX >> 16, dY >> 16, False);
-
-		dX /= 2; dY /= 2;
-
-		dX = dX -		FxM(FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), dX);
-		dY = dY -	FxM(FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), dY), 1.6);
-
-		HUDMessage
-		(
-			s:"A"; HUDMsg_FadeInOut | (Flags & _WV3Proj__FlagFmt),
-			ID, CR_Untranslated,
-			(dX & 0xFFFF0000) + OffsetX,
-			(dY & 0xFFFF0000) + OffsetY,
-			HoldTime, FadeInTime, FadeOutTime,
-			FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W)
-		);
-	}
-	
-	Void Draw_WV3Image__FIO_S
-	(
-		Vec3_T*	Point,
-		Vec2_T*	VFHUD,
-		Vec3_T*	ScaleX, Vec3_T* ScaleY,
-		Vec4_T*	Alpha,
-		Int		ID,
-		Fixed	FxHlFOV			= 0.125,//== FOV 90
-		Flags_	Flags			= 0,
-		Fixed	OffsetX			= 0,
-		Fixed	OffsetY			= 0,
-		Fixed	SV2DstFadeMul	= 8.0,
-		Fixed	SV2DstSizeDiv	= 256,
-		Fixed	FadeInTime		= 0.75,
-		Fixed	FadeOutTime		= 0.75,
-		Fixed 	HoldTime		= 0.04,
-		Fixed	Dst				= 0.0
-	)
-	{
-		Fixed dX = Point.X - GetActorX(0);
-		Fixed dY = Point.Y - GetActorY(0);
-		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
-
-		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
-
-		If(_Tmp::V3_0.X <= 0)		{Return;}
-
-		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
-
-		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
-		Fixed HUDYSize = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
-
-		Fixed HUDX = Math::NoZero(FxM(VFHUD.X, HUDXSize));
-		Fixed HUDY = Math::NoZero(FxM(VFHUD.Y, HUDYSize));
-		
-		OffsetX = (FxM(OffsetX, HUDXSize) & 0xFFFF0000) | (OffsetX & 0x0000FFFF);
-		OffsetY = (FxM(OffsetY, HUDYSize) & 0xFFFF0000) | (OffsetY & 0x0000FFFF);
-
-		SetHUDSize(HUDX >> 16, HUDY >> 16, False);
-
-		dX = HUDX/2; dY = HUDY/2;
-
-		HUDX =		FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV))		;
-		HUDY =	FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), 1.6);
-
-		dX = dX - FxM(HUDX, dX);
-		dY = dY - FxM(HUDY, dY);
-
-		dZ = VFHUD.X/2;
-		HUDX = RatioMap(dZ + FxM(HUDX, dZ), VFHUD.X, FxD(VFHUD.X, VFHUD.Y));
-
-		dZ = VFHUD.Y/2;
-		HUDY = dZ - FxM(HUDY, dZ);
-
-		HUDMessage
-		(
-			s:"A"; HUDMsg_FadeInOut | (Flags & _WV3Proj__FlagFmt),
-			ID, CR_Untranslated,
-			(dX & 0xFFFF0000) + OffsetX,
-			(dY & 0xFFFF0000) + OffsetY,
-			HoldTime, FadeInTime, FadeOutTime,
-			FxM
-			(
-				FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W),
-				Math::Clamp
-				(
-					FxM
-					(
-						Math::Min2(	Math::HalfPoint(FxD(HUDX, VFHUD.X), 1.0),
-									Math::HalfPoint(FxD(HUDY, VFHUD.Y), 1.0)	) +
-						Math::Mean2
-						(
-							FxD(SV2DstSizeDiv, Math::FPower2(HUDXSize/2)),
-							FxD(SV2DstSizeDiv, Math::FPower2(HUDYSize/2))
-						),
-						SV2DstFadeMul
-					), 0.0, 1.0
-				)
-			)
-		);
-	}
-	
-	Void Draw_WV3Image__FIO_S_DL
-	(
-		Vec3_T*	Point,
-		Vec2_T*	VFHUD,
-		Vec3_T*	ScaleX, Vec3_T* ScaleY,
-		Vec4_T*	Alpha,
-		Int		ID1,
-		Int		ID2,
-		Fixed	FxHlFOV			= 0.125,//== FOV 90
-		Flags_	Flags			= 0,
-		Fixed	OffsetX			= 0,
-		Fixed	OffsetY			= 0,
-		Fixed	SV2DstFadeMul1	= 8.0,
-		Fixed	SV2DstFadeMul2	= 2.0,
-		Fixed	SV2DstSizeDiv	= 256,
-		Fixed	FadeInTime		= 0.75,
-		Fixed	FadeOutTime		= 0.75,
-		Fixed 	HoldTime		= 0.04,
-		Fixed	Dst				= 0.0
-	)
-	{
-		Fixed dX = Point.X - GetActorX(0);
-		Fixed dY = Point.Y - GetActorY(0);
-		Fixed dZ = Point.Z - (GetActorZ(0) + GetActorViewHeight(0));
-
-		Math::Rotate__WV3_SV2(dX, dY, dZ, GetActorRoll(0), GetActorPitch(0), GetActorAngle(0), _Tmp::V3_0);
-
-		If(_Tmp::V3_0.X <= 0)		{Return;}
-
-		If(Dst == 0) {Dst = MathBI::Distance3D(dX, dY, dZ);}
-
-		Fixed HUDXSize = Math::Clamp((ScaleX.X < 0)?(FxD(-ScaleX.X, Dst)):(FxM(Dst, ScaleX.X)), ScaleX.Y, ScaleX.Z);
-		Fixed HUDYSize = Math::Clamp((ScaleY.X < 0)?(FxD(-ScaleY.X, Dst)):(FxM(Dst, ScaleY.X)), ScaleY.Y, ScaleY.Z);
-
-		Fixed HUDX = Math::NoZero(FxM(VFHUD.X, HUDXSize));
-		Fixed HUDY = Math::NoZero(FxM(VFHUD.Y, HUDYSize));
-
-		SetHUDSize(HUDX >> 16, HUDY >> 16, False);
-
-		dX = HUDX/2; dY = HUDY/2;
-
-		HUDX =		FxD(FxD(_Tmp::V3_0.Y, _Tmp::V3_0.X), Math::Tan(FxHlFOV))		;
-		HUDY =	FxM(FxD(FxD(_Tmp::V3_0.Z, _Tmp::V3_0.X), Math::Tan(FxHlFOV)), 1.6);
-
-		dX = dX - FxM(HUDX, dX);
-		dY = dY - FxM(HUDY, dY);
-
-		dZ = VFHUD.X/2;
-		HUDX = RatioMap(dZ + FxM(HUDX, dZ), VFHUD.X, FxD(VFHUD.X, VFHUD.Y));
-
-		dZ = VFHUD.Y/2;
-		HUDY = dZ - FxM(HUDY, dZ);
-
-		dZ =	Math::Min2(	Math::HalfPoint(FxD(HUDX, VFHUD.X), 1.0),
-							Math::HalfPoint(FxD(HUDY, VFHUD.Y), 1.0)	) +
-				Math::Mean2
-				(
-					FxD(SV2DstSizeDiv, Math::FPower2(HUDXSize/2)),
-					FxD(SV2DstSizeDiv, Math::FPower2(HUDYSize/2))
-				);
-		FxHlFOV = FxM(Math::Clamp(Math::FPower4((Alpha.X < 0) ? (FxD(-Alpha.X, Dst)) : (FxM(Dst, Alpha.X))), Alpha.Y, Alpha.Z), Alpha.W);
-
-		HUDMessage
-		(
-			s:"A"; HUDMsg_FadeInOut | (Flags & _WV3Proj__FlagFmt),
-			ID1, CR_Untranslated,
-			(dX & 0xFFFF0000) + OffsetX,
-			(dY & 0xFFFF0000) + OffsetY,
-			HoldTime, FadeInTime, FadeOutTime,
-			FxM(FxHlFOV, Math::Clamp(FxM(dZ, SV2DstFadeMul1), 0.0, 1.0))
-		);
-		HUDMessage
-		(
-			s:"A"; HUDMsg_FadeInOut | (Flags & _WV3Proj__FlagFmt),
-			ID2, CR_Untranslated,
-			(dX & 0xFFFF0000) + OffsetX,
-			(dY & 0xFFFF0000) + OffsetY,
-			HoldTime, FadeInTime, FadeOutTime/2,
-			FxM(FxHlFOV, Math::Clamp(FxM(dZ, SV2DstFadeMul2), 0.0, 1.0))/2
-		);
-	}
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 	Void Draw_WV3Text__FO
 	(
 		Str		Text,
@@ -2518,6 +1211,7 @@ Namespace Graphics
 		Str		Text,
 		Vec3_T*	Point,
 		Vec2_T*	VFHUD,
+		Fixed	WndRatio,
 		Vec3_T*	ScaleX, Vec3_T* ScaleY,
 		Vec4_T*	Alpha,
 		Int		ID,
@@ -2562,10 +1256,10 @@ Namespace Graphics
 		dY = dY - FxM(HUDY, dY);
 
 		dZ = VFHUD.X/2;
-		HUDX = RatioMap(dZ + FxM(HUDX, dZ), VFHUD.X, FxD(VFHUD.X, VFHUD.Y));
+		HUDX = RatioMap(dZ + FxM(HUDX, dZ), VFHUD.X, WndRatio, False);
 
 		dZ = VFHUD.Y/2;
-		HUDY = dZ - FxM(HUDY, dZ);
+		HUDY = RatioMap(dZ - FxM(HUDY, dZ), VFHUD.Y, WndRatio, True);
 		
 		HUDMessage
 		(
@@ -2600,6 +1294,7 @@ Namespace Graphics
 		Str		Text,
 		Vec3_T*	Point,
 		Vec2_T*	VFHUD,
+		Fixed	WndRatio,
 		Vec3_T*	ScaleX, Vec3_T* ScaleY,
 		Vec4_T*	Alpha,
 		Int		ID1,
@@ -2646,10 +1341,10 @@ Namespace Graphics
 		dY = dY - FxM(HUDY, dY);
 
 		dZ = VFHUD.X/2;
-		HUDX = RatioMap(dZ + FxM(HUDX, dZ), VFHUD.X, FxD(VFHUD.X, VFHUD.Y));
+		HUDX = RatioMap(dZ + FxM(HUDX, dZ), VFHUD.X, WndRatio, False);
 
 		dZ = VFHUD.Y/2;
-		HUDY = dZ - FxM(HUDY, dZ);
+		HUDY = RatioMap(dZ - FxM(HUDY, dZ), VFHUD.Y, WndRatio, True);
 
 		dZ =	Math::Min2(	Math::HalfPoint(FxD(HUDX, VFHUD.X), 1.0),
 							Math::HalfPoint(FxD(HUDY, VFHUD.Y), 1.0)	) +
@@ -2739,6 +1434,7 @@ Namespace Graphics
 		Str		Text,
 		Vec3_T*	Point,
 		Vec2_T*	VFHUD,
+		Fixed	WndRatio,
 		Vec3_T*	ScaleX, Vec3_T* ScaleY,
 		Vec4_T*	Alpha,
 		Int		ID,
@@ -2782,10 +1478,10 @@ Namespace Graphics
 		dY = dY - FxM(HUDY, dY);
 
 		dZ = VFHUD.X/2;
-		HUDX = RatioMap(dZ + FxM(HUDX, dZ), VFHUD.X, FxD(VFHUD.X, VFHUD.Y));
+		HUDX = RatioMap(dZ + FxM(HUDX, dZ), VFHUD.X, WndRatio, False);
 
 		dZ = VFHUD.Y/2;
-		HUDY = dZ - FxM(HUDY, dZ);
+		HUDY = RatioMap(dZ - FxM(HUDY, dZ), VFHUD.Y, WndRatio, True);
 		
 		HUDMessage
 		(
@@ -2820,6 +1516,7 @@ Namespace Graphics
 		Str		Text,
 		Vec3_T*	Point,
 		Vec2_T*	VFHUD,
+		Fixed	WndRatio,
 		Vec3_T*	ScaleX, Vec3_T* ScaleY,
 		Vec4_T*	Alpha,
 		Int		ID1,
@@ -2865,10 +1562,10 @@ Namespace Graphics
 		dY = dY - FxM(HUDY, dY);
 
 		dZ = VFHUD.X/2;
-		HUDX = RatioMap(dZ + FxM(HUDX, dZ), VFHUD.X, FxD(VFHUD.X, VFHUD.Y));
+		HUDX = RatioMap(dZ + FxM(HUDX, dZ), VFHUD.X, WndRatio, False);
 
 		dZ = VFHUD.Y/2;
-		HUDY = dZ - FxM(HUDY, dZ);
+		HUDY = RatioMap(dZ - FxM(HUDY, dZ), VFHUD.Y, WndRatio, True);
 
 		dZ =	Math::Min2(	Math::HalfPoint(FxD(HUDX, VFHUD.X), 1.0),
 							Math::HalfPoint(FxD(HUDY, VFHUD.Y), 1.0)	) +
@@ -2959,6 +1656,7 @@ Namespace Graphics
 		Str		Text,
 		Vec3_T*	Point,
 		Vec2_T*	VFHUD,
+		Fixed	WndRatio,
 		Vec3_T*	ScaleX, Vec3_T* ScaleY,
 		Vec4_T*	Alpha,
 		Int		ID,
@@ -3004,10 +1702,10 @@ Namespace Graphics
 		dY = dY - FxM(HUDY, dY);
 
 		dZ = VFHUD.X/2;
-		HUDX = RatioMap(dZ + FxM(HUDX, dZ), VFHUD.X, FxD(VFHUD.X, VFHUD.Y));
+		HUDX = RatioMap(dZ + FxM(HUDX, dZ), VFHUD.X, WndRatio, False);
 
 		dZ = VFHUD.Y/2;
-		HUDY = dZ - FxM(HUDY, dZ);
+		HUDY = RatioMap(dZ - FxM(HUDY, dZ), VFHUD.Y, WndRatio, True);
 		
 		HUDMessage
 		(
@@ -3042,6 +1740,7 @@ Namespace Graphics
 		Str		Text,
 		Vec3_T*	Point,
 		Vec2_T*	VFHUD,
+		Fixed	WndRatio,
 		Vec3_T*	ScaleX, Vec3_T* ScaleY,
 		Vec4_T*	Alpha,
 		Int		ID1,
@@ -3089,10 +1788,10 @@ Namespace Graphics
 		dY = dY - FxM(HUDY, dY);
 
 		dZ = VFHUD.X/2;
-		HUDX = RatioMap(dZ + FxM(HUDX, dZ), VFHUD.X, FxD(VFHUD.X, VFHUD.Y));
+		HUDX = RatioMap(dZ + FxM(HUDX, dZ), VFHUD.X, WndRatio, False);
 
 		dZ = VFHUD.Y/2;
-		HUDY = dZ - FxM(HUDY, dZ);
+		HUDY = RatioMap(dZ - FxM(HUDY, dZ), VFHUD.Y, WndRatio, True);
 
 		dZ =	Math::Min2(	Math::HalfPoint(FxD(HUDX, VFHUD.X), 1.0),
 							Math::HalfPoint(FxD(HUDY, VFHUD.Y), 1.0)	) +
