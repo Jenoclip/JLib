@@ -1090,7 +1090,7 @@ Namespace Graphics
 		If	(	(VFHUD_Min == 0) ||
 				(WndRatio == 0)		)	{Return;}
 		
-		Fixed VFHUD_Scaled = FxM(VFHUD_Min, GetRatioScaling(WndRatio));
+		Fixed VFHUD_Scaled = FxD(VFHUD_Min, GetRatioScaling(WndRatio));
 		
 		If(VFHUD_Scaled < 0)
 		{
@@ -1109,7 +1109,7 @@ Namespace Graphics
 				(WndRatio == 0)		)	{Return;}
 		
 		VFV2HUD.X = Math::Min2(VFV2HUD.X, VFV2HUD.Y)			;
-		VFV2HUD.Y = FxM(VFV2HUD.X, GetRatioScaling(WndRatio))	;
+		VFV2HUD.Y = FxD(VFV2HUD.X, GetRatioScaling(WndRatio))	;
 		
 		If(VFV2HUD.Y  < 0)
 		{
@@ -1123,7 +1123,7 @@ Namespace Graphics
 		}
 	}
 	
-	Fixed Pl_FxHlFOV(Int PNum)//PLayer FiXed HaLf FOV
+	NAng_ Pl_FxHlFOV(Int PNum)//PLayer FiXed HaLf FOV
 	{
 		Return (GetPlayerInfo(PNum, PlayerInfo_FOV) << 16) / 720;
 	}/*
@@ -1160,7 +1160,7 @@ Namespace Graphics
 		Vec3_T*	ScaleX, Vec3_T* ScaleY,
 		Vec4_T*	Alpha,
 		Int		ID,
-		Fixed	FxHlFOV		= 0.125,//== FOV 90
+		NAng_	FxHlFOV		= 0.125,//== FOV 90
 		Flags_	Flags		= 0,
 		Fixed	OffsetX		= 0,
 		Fixed	OffsetY		= 0,
@@ -1215,7 +1215,7 @@ Namespace Graphics
 		Vec3_T*	ScaleX, Vec3_T* ScaleY,
 		Vec4_T*	Alpha,
 		Int		ID,
-		Fixed	FxHlFOV			= 0.125,//== FOV 90
+		NAng_	FxHlFOV			= 0.125,//== FOV 90
 		Flags_	Flags			= 0,
 		Fixed	OffsetX			= 0,
 		Fixed	OffsetY			= 0,
@@ -1299,7 +1299,7 @@ Namespace Graphics
 		Vec4_T*	Alpha,
 		Int		ID1,
 		Int		ID2,
-		Fixed	FxHlFOV			= 0.125,//== FOV 90
+		NAng_	FxHlFOV			= 0.125,//== FOV 90
 		Flags_	Flags			= 0,
 		Fixed	OffsetX			= 0,
 		Fixed	OffsetY			= 0,
@@ -1383,7 +1383,7 @@ Namespace Graphics
 		Vec3_T*	ScaleX, Vec3_T* ScaleY,
 		Vec4_T*	Alpha,
 		Int		ID,
-		Fixed	FxHlFOV		= 0.125,//== FOV 90
+		NAng_	FxHlFOV		= 0.125,//== FOV 90
 		Flags_	Flags		= 0,
 		Fixed	OffsetX		= 0,
 		Fixed	OffsetY		= 0,
@@ -1438,7 +1438,7 @@ Namespace Graphics
 		Vec3_T*	ScaleX, Vec3_T* ScaleY,
 		Vec4_T*	Alpha,
 		Int		ID,
-		Fixed	FxHlFOV			= 0.125,//== FOV 90
+		NAng_	FxHlFOV			= 0.125,//== FOV 90
 		Flags_	Flags			= 0,
 		Fixed	OffsetX			= 0,
 		Fixed	OffsetY			= 0,
@@ -1521,7 +1521,7 @@ Namespace Graphics
 		Vec4_T*	Alpha,
 		Int		ID1,
 		Int		ID2,
-		Fixed	FxHlFOV			= 0.125,//== FOV 90
+		NAng_	FxHlFOV			= 0.125,//== FOV 90
 		Flags_	Flags			= 0,
 		Fixed	OffsetX			= 0,
 		Fixed	OffsetY			= 0,
@@ -1604,7 +1604,7 @@ Namespace Graphics
 		Vec3_T*	ScaleX, Vec3_T* ScaleY,
 		Vec4_T*	Alpha,
 		Int		ID,
-		Fixed	FxHlFOV		= 0.125,//== FOV 90
+		NAng_	FxHlFOV		= 0.125,//== FOV 90
 		Flags_	Flags		= 0,
 		Fixed	OffsetX		= 0,
 		Fixed	OffsetY		= 0,
@@ -1660,7 +1660,7 @@ Namespace Graphics
 		Vec3_T*	ScaleX, Vec3_T* ScaleY,
 		Vec4_T*	Alpha,
 		Int		ID,
-		Fixed	FxHlFOV			= 0.125,//== FOV 90
+		NAng_	FxHlFOV			= 0.125,//== FOV 90
 		Flags_	Flags			= 0,
 		Fixed	OffsetX			= 0,
 		Fixed	OffsetY			= 0,
@@ -1745,7 +1745,7 @@ Namespace Graphics
 		Vec4_T*	Alpha,
 		Int		ID1,
 		Int		ID2,
-		Fixed	FxHlFOV			= 0.125,//== FOV 90
+		NAng_	FxHlFOV			= 0.125,//== FOV 90
 		Flags_	Flags			= 0,
 		Fixed	OffsetX			= 0,
 		Fixed	OffsetY			= 0,
