@@ -229,7 +229,7 @@ Namespace Math
 	
 	Byte ByteFMod(Int Val)
 	{
-		Return Val - (IFloor((Val << 16) / UInt8_Max) * UInt8_Max);
+		Return Val - ((Val >> 8) << 8);
 	}
 	
 	Num_ Bounce(Num_ Val, Num_ Min, Num_ Max)
@@ -615,74 +615,86 @@ Namespace Math
 	
 	
 	
-	Int IPower2(Int Val){	If(Val >  46340)	{	Return Int32_Max;	}
-							If(Val < -46340)	{	Return Int32_Max;	}
-							Return Val * Val;							}
+	Int IPow2(Int Val){	If(Val >  46340)	{	Return Int32_Max;	}
+						If(Val < -46340)	{	Return Int32_Max;	}
+						Return Val * Val;							}
 	
 	
-	Int IPower3(Int Val){	If(Val >  1290)		{	Return Int32_Max;	}
-							If(Val < -1290)		{	Return Int32_Min;	}
-							Return Val * Val * Val;						}
+	Int IPow3(Int Val){	If(Val >  1290)		{	Return Int32_Max;	}
+						If(Val < -1290)		{	Return Int32_Min;	}
+						Return Val * Val * Val;						}
 	
 	
-	Int IPower4(Int Val){	If(Val >  215)		{	Return Int32_Max;	}
-							If(Val < -215)		{	Return Int32_Max;	}
-							Return Val * Val * Val * Val;				}
+	Int IPow4(Int Val){	If(Val >  215)		{	Return Int32_Max;	}
+						If(Val < -215)		{	Return Int32_Max;	}
+						Return Val * Val * Val * Val;				}
 	
 	
-	Int IPower5(Int Val){	If(Val >  73)		{	Return Int32_Max;	}
-							If(Val < -73)		{	Return Int32_Min;	}
-							Return Val * Val * Val * Val * Val;			}
+	Int IPow5(Int Val){	If(Val >  73)		{	Return Int32_Max;	}
+						If(Val < -73)		{	Return Int32_Min;	}
+						Return Val * Val * Val * Val * Val;			}
 	
 	
-	Int IPower6(Int Val){	If(Val >  35)		{	Return Int32_Max;	}
-							If(Val < -35)		{	Return Int32_Max;	}
-							Return Val * Val * Val * Val * Val * Val;	}
+	Int IPow6(Int Val){	If(Val >  35)		{	Return Int32_Max;	}
+						If(Val < -35)		{	Return Int32_Max;	}
+						Return Val * Val * Val * Val * Val * Val;	}
 	
 	
-	Int IPower7(Int Val){	If(Val >  21)		{	Return Int32_Max;		}
-							If(Val < -21)		{	Return Int32_Min;		}
-							Return Val * Val * Val * Val * Val * Val * Val;	}
+	Int IPow7(Int Val){	If(Val >  21)		{	Return Int32_Max;		}
+						If(Val < -21)		{	Return Int32_Min;		}
+						Return Val * Val * Val * Val * Val * Val * Val;	}
 	
-	Int IPower8(Int Val){	If(Val >  14)		{	Return Int32_Max;				}
-							If(Val < -14)		{	Return Int32_Max;				}
-							Return Val * Val * Val * Val * Val * Val * Val * Val;	}
+	Int IPow8(Int Val){	If(Val >  14)		{	Return Int32_Max;				}
+						If(Val < -14)		{	Return Int32_Max;				}
+						Return Val * Val * Val * Val * Val * Val * Val * Val;	}
 	
-	
-	
-	Fixed FPower2(Fixed Val){	If(Val >  11863102)	{	Return Int32_Max;	}
-								If(Val < -11863102)	{	Return Int32_Max;	}
-								Return FxM(Val, Val);						}
-	
-	
-	Fixed FPower3(Fixed Val){	If(Val >  2097130)	{	Return Int32_Max;	}
-								If(Val < -2097130)	{	Return Int32_Min;	}
-								Return FxM(Val, FxM(Val, Val));				}
+	Int IPowC(Int Val, Int Pow)				{	Int Val2 = 1;
+												While(Pow > 0)
+											{	Val2 = Val2 * Val;Pow -= 1;		}
+												Return Val2;					}
 	
 	
-	Fixed FPower4(Fixed Val){	If(Val >  881737)	{	Return Int32_Max;	}
-								If(Val < -881737)	{	Return Int32_Max;	}
-								Return FxM(Val, FxM(Val, FxM(Val, Val)));	}
+	
+	Fixed FPow2(Fixed Val){	If(Val >  11863102)	{	Return Int32_Max;	}
+							If(Val < -11863102)	{	Return Int32_Max;	}
+							Return FxM(Val, Val);						}
 	
 	
-	Fixed FPower5(Fixed Val){	If(Val >  524284)	{	Return Int32_Max;			}
-								If(Val < -524284)	{	Return Int32_Min;			}
-								Return FxM(Val, FxM(Val, FxM(Val, FxM(Val, Val))));	}
+	Fixed FPow3(Fixed Val){	If(Val >  2097130)	{	Return Int32_Max;	}
+							If(Val < -2097130)	{	Return Int32_Min;	}
+							Return FxM(Val, FxM(Val, Val));				}
 	
 	
-	Fixed FPower6(Fixed Val){	If(Val >  370725)	{	Return Int32_Max;						}
-								If(Val < -370725)	{	Return Int32_Max;						}
-								Return FxM(Val, FxM(Val, FxM(Val, FxM(Val, FxM(Val, Val)))));	}
+	Fixed FPow4(Fixed Val){	If(Val >  881737)	{	Return Int32_Max;	}
+							If(Val < -881737)	{	Return Int32_Max;	}
+							Return FxM(Val, FxM(Val, FxM(Val, Val)));	}
 	
 	
-	Fixed FPower7(Fixed Val){	If(Val >  289429)	{	Return Int32_Max;								}
-								If(Val < -289429)	{	Return Int32_Min;								}
-								Return FxM(Val, FxM(Val, FxM(Val, FxM(Val, FxM(Val, FxM(Val, Val))))));	}
+	Fixed FPow5(Fixed Val){	If(Val >  524284)	{	Return Int32_Max;			}
+							If(Val < -524284)	{	Return Int32_Min;			}
+							Return FxM(Val, FxM(Val, FxM(Val, FxM(Val, Val))));	}
 	
 	
-	Fixed FPower8(Fixed Val){	If(Val >  240386)	{	Return Int32_Max;											}
-								If(Val < -240386)	{	Return Int32_Max;											}
-								Return FxM(Val, FxM(Val, FxM(Val, FxM(Val, FxM(Val, FxM(Val, FxM(Val, Val)))))));	}
+	Fixed FPow6(Fixed Val){	If(Val >  370725)	{	Return Int32_Max;						}
+							If(Val < -370725)	{	Return Int32_Max;						}
+							Return FxM(Val, FxM(Val, FxM(Val, FxM(Val, FxM(Val, Val)))));	}
+	
+	
+	Fixed FPow7(Fixed Val){	If(Val >  289429)	{	Return Int32_Max;								}
+							If(Val < -289429)	{	Return Int32_Min;								}
+							Return FxM(Val, FxM(Val, FxM(Val, FxM(Val, FxM(Val, FxM(Val, Val))))));	}
+	
+	
+	Fixed FPow8(Fixed Val){	If(Val >  240386)	{	Return Int32_Max;											}
+							If(Val < -240386)	{	Return Int32_Max;											}
+							Return FxM(Val, FxM(Val, FxM(Val, FxM(Val, FxM(Val, FxM(Val, FxM(Val, Val)))))));	}
+	
+	Fixed FPowC(Fixed Val, Int Pow)				{	Fixed Val2 = 1.0;Int Pow2 = Abs(Pow);
+													While(Pow2 > 0)
+												{	Val2 = FxM(Val2, Val);Pow2 -= 1;	}
+													If(Pow < 0)
+													{Val2 = FxD(1.0, Val2);}
+													Return Val2;						}
 	
 	//IDK For why you need more than 8 powers o_0
 	
@@ -773,11 +785,7 @@ Namespace IDeg	//Integer DEGree
 {
 	IDeg_ Format(IDeg_ Angle)
 	{
-		If(Angle < 0)
-		{
-			Angle = 360 + (Angle % 360);
-		}
-		Return Angle % 360;
+		Return Math::FMod(Angle, 360);
 	}
 	
 	IDeg_ Format180(IDeg_ Angle)
@@ -796,11 +804,7 @@ Namespace FDeg	//Fixed(type) DEGree
 {
 	FDeg_ Format(FDeg_ Angle)
 	{
-		If(Angle < 0.0)
-		{
-			Angle = 360.0 + (Angle % 360.0);
-		}
-		Return Angle % 360.0;
+		Return Math::FMod(Angle, 360.0);
 	}
 	
 	FDeg_ Format180(FDeg_ Angle)
@@ -819,11 +823,7 @@ Namespace NAng	//Normalized ANGle
 {
 	NAng_ Format(NAng_ Angle)
 	{
-		If(Angle < 0.0)
-		{
-			Angle = 1.0 + (Angle % 1.0);
-		}
-		Return Angle % 1.0;
+		Return Math::FMod(Angle, 1.0);
 	}
 	
 	NAng_ Format180(NAng_ Angle)
@@ -842,11 +842,7 @@ Namespace BAng	//Byte ANGle
 {
 	BAng_ Format(BAng_ Angle)
 	{
-		If(Angle < 0)
-		{
-			Angle = 256 + (Angle % 256);
-		}
-		Return Angle % 256;
+		Return Math::ByteFMod(Angle);
 	}
 	
 	BAng_ Format180(BAng_ Angle)

@@ -215,9 +215,9 @@ Namespace Map
 	{
 		Int Output;
 		Math::RotateV3_RPA(Offsets, OffsetsRPA, _Tmp::V3_0);
-		Int X = Pos.X + _Tmp::V3_0.X;
-		Int Y = Pos.Y + _Tmp::V3_0.Y;
-		Int Z = Pos.Z + _Tmp::V3_0.Z;
+		Fixed X = Pos.X + _Tmp::V3_0.X;
+		Fixed Y = Pos.Y + _Tmp::V3_0.Y;
+		Fixed Z = Pos.Z + _Tmp::V3_0.Z;
 		
 		If(ActorPos != Null){ActorPos.X = X; ActorPos.Y = Y; ActorPos.Z = Z;}
 		If(IgnoreCollision)	{Output = SpawnForced	(ActorLiteral, X, Y, Z, ActorTID, 0);}
@@ -236,9 +236,9 @@ Namespace Map
 	{
 		Int Output;
 		Math::RotateV3_RPA(Offsets, OffsetsRPA, _Tmp::V3_0);
-		Int X = Pos.X + _Tmp::V3_0.X;
-		Int Y = Pos.Y + _Tmp::V3_0.Y;
-		Int Z = Pos.Z + _Tmp::V3_0.Z;
+		Fixed X = Pos.X + _Tmp::V3_0.X;
+		Fixed Y = Pos.Y + _Tmp::V3_0.Y;
+		Fixed Z = Pos.Z + _Tmp::V3_0.Z;
 		
 		Output = SetActorPosition(TID, X, Y, Z, False);
 		
@@ -250,6 +250,20 @@ Namespace Map
 		}
 		
 		Return Output;
+	}
+	
+	Void TID_SetRPA(Int TID, Vec3_T* RPA)
+	{
+		SetActorRoll (TID, RPA.X);
+		SetActorPitch(TID, RPA.Y);
+		SetActorAngle(TID, RPA.Z);
+	}
+	
+	Void TID_AddRPA(Int TID, Vec3_T* RPA)
+	{
+		SetActorRoll (TID, GetActorRoll (TID) + RPA.X);
+		SetActorPitch(TID, GetActorPitch(TID) + RPA.Y);
+		SetActorAngle(TID, GetActorAngle(TID) + RPA.Z);
 	}
 }
 
@@ -354,9 +368,9 @@ Namespace MapBI
 	{
 		Int Output;
 		MathBI::RotateV3_RPA(OfsX, OfsY, OfsZ, OfsR, OfsP, OfsA, _Tmp::V3_0);
-		Int X = PosX + _Tmp::V3_0.X;
-		Int Y = PosY + _Tmp::V3_0.Y;
-		Int Z = PosZ + _Tmp::V3_0.Z;
+		Fixed X = PosX + _Tmp::V3_0.X;
+		Fixed Y = PosY + _Tmp::V3_0.Y;
+		Fixed Z = PosZ + _Tmp::V3_0.Z;
 		
 		If(ActorPos != Null){ActorPos.X = X; ActorPos.Y = Y; ActorPos.Z = Z;}
 		If(IgnoreCollision)	{Output = SpawnForced	(ActorLiteral, X, Y, Z, ActorTID, 0);}
@@ -382,9 +396,9 @@ Namespace MapBI
 	{
 		Int Output;
 		MathBI::RotateV3_RPA(OfsX, OfsY, OfsZ, OfsR, OfsP, OfsA, _Tmp::V3_0);
-		Int X = PosX + _Tmp::V3_0.X;
-		Int Y = PosY + _Tmp::V3_0.Y;
-		Int Z = PosZ + _Tmp::V3_0.Z;
+		Fixed X = PosX + _Tmp::V3_0.X;
+		Fixed Y = PosY + _Tmp::V3_0.Y;
+		Fixed Z = PosZ + _Tmp::V3_0.Z;
 		
 		Output = SetActorPosition(TID, X, Y, Z, False);
 		
@@ -396,5 +410,19 @@ Namespace MapBI
 		}
 		
 		Return Output;
+	}
+	
+	Void TID_SetRPA(Int TID, Fixed Roll, Fixed Pitch, Fixed Angle)
+	{
+		SetActorRoll (TID, Roll );
+		SetActorPitch(TID, Pitch);
+		SetActorAngle(TID, Angle);
+	}
+	
+	Void TID_AddRPA(Int TID, Fixed Roll, Fixed Pitch, Fixed Angle)
+	{
+		SetActorRoll (TID, GetActorRoll (TID) + Roll );
+		SetActorPitch(TID, GetActorPitch(TID) + Pitch);
+		SetActorAngle(TID, GetActorAngle(TID) + Angle);
 	}
 }

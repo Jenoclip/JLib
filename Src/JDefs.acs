@@ -214,9 +214,9 @@
 	#Define Stringize(Arg)		#Arg
 #endif
 
-#Define	JLib_Build		"29_09_2025"
-#Define	JLib_Version	"0.1C"
-#Define	JLib_VerFixed	0.1
+#Define	JLib_Build		"02_11_2025"
+#Define	JLib_Version	"0.1D"
+#Define	JLib_VerFixed	6557			// 0.1 + 4
 
 
 #ifdef JLib__Enable_Dev_Only
